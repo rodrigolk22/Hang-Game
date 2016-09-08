@@ -45,13 +45,25 @@ socket.on('listening', function () {
 
 /**
  * Send a message to the group
- * @param obj
+ * @param type
+ * @param message
  * @param callback
  */
-socket.sendMessage = function (obj, callback) {
-    var buffer = Buffer.from(obj);
+socket.emit = function (type, message, callback) {
+
+    // transform the object in a string to send through the wire
+    var str = JSON.stringify({
+        type: type,
+        message: message
+    });
+
+    // create a buffer object from the string
+    var buffer = Buffer.from(str);
+
     socket.send(buffer, config.multicastPort, config.multicastGroup, function (err) {
-        callback(err);
+        if (typeof callback == 'function') {
+            callback(err);
+        }
     });
 };
 

@@ -6,6 +6,12 @@ var open = require('open'),
 // open the browser client
 open('http://localhost:8080');
 
+peer.emit('getTheGame', null, function (err) {
+    if (err) throw err;
+});
+
+
+
 // peer message handlers
 peer.on('message', function (msg, rinfo) {
 
