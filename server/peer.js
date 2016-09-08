@@ -3,6 +3,24 @@ var config = require('./config');
 
 var socket = dgram.createSocket('udp4');
 
+// bind the socket to an open port
+socket.bind(config.multicastPort, function () {
+
+    // config multicast
+    socket.setMulticastTTL(128);
+
+    // dont receive own sended messages
+    socket.setMulticastLoopback(false);
+
+    // join the group
+    socket.addMembership(config.multicastGroup);
+
+    if (config.debug) {
+        console.log('socket joined: ' + config.multicastGroup);
+    }
+});
+
+// error handler
 socket.on('error', function (err)  {
     socket.close();
     if (config.debug) {
@@ -10,12 +28,14 @@ socket.on('error', function (err)  {
     }
 });
 
+// close handler
 socket.on('close', function ()  {
     if (config.debug) {
         console.log('socket closed');
     }
 });
 
+// listening handler
 socket.on('listening', function () {
     if (config.debug) {
         var address = socket.address();
@@ -23,49 +43,15 @@ socket.on('listening', function () {
     }
 });
 
-socket.on('message', function (msg, rinfo) {
-    console.log('peer got: ' + msg + ' from ' + rinfo.address + ':' + rinfo.port);
-});
-
 /**
- * Send an object to the group
+ * Send a message to the group
  * @param obj
- * @param errorCallback
+ * @param callback
  */
-socket.sendObject = function (obj, callback) {
+socket.sendMessage = function (obj, callback) {
     var buffer = Buffer.from(obj);
     socket.send(buffer, config.multicastPort, config.multicastGroup, function (err) {
         callback(err);
-    });
-};
-
-/**
- * Start a socket listening on @address at @port and join the @multicastGroup
- * @param port
- * @param address
- * @param multicastGroup
- */
-socket.start = function (port, multicastGroup) {
-
-    port = port || config.defaultPort;
-    multicastGroup = multicastGroup || config.multicastGroup;
-
-    // bind the socket to an open port
-    socket.bind(port, function () {
-
-        // config multicast
-        //socket.setBroadcast(true);
-        socket.setMulticastTTL(128);
-
-        // dont receive own messages
-        socket.setMulticastLoopback(false);
-
-        // join the group
-        socket.addMembership(multicastGroup);
-
-        if (config.debug) {
-            console.log('socket joined: ' + multicastGroup);
-        }
     });
 };
 

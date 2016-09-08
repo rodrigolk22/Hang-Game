@@ -1,24 +1,53 @@
-var peer = require('./peer');
-var prompt = require('prompt');
-var open = require('open');
+var open = require('open'),
+    game = require('./game'),
+    peer = require('./peer'),
+    server = require('socket.io')(8081); // socket for the browser client
 
-prompt.start();
+// open the browser client
+open('http://localhost:8080');
 
-prompt.get(['username', 'port', 'group'], function (err, res) {
-    if (err) throw err;
+// peer message handlers
+peer.on('message', function (msg, rinfo) {
 
-    console.log('Hello ' + res.username + '!');
+    console.log('peer got: ' + msg + ' from ' + rinfo.address + ':' + rinfo.port);
 
-    // start the peer (bind the socket, join the group and open the browser)
-    peer.start(res.port, res.group);
+    if (msg == 'joinTheGame') {
+        // TODO: add a joinTheGame message handler
+    }
 
-    const message = Buffer.from(res.username + ' joined the game!');
-    peer.sendObject(message, 6789, function (err) {
-        if (err) throw err;
+    // TODO: add a guess message handler
+    if (msg == 'guess') {
 
-        // do something
+    }
+
+    if (msg == 'gameUpdated') {
+        // TODO: add a gameUpdate message handler
+    }
+});
+
+// server message handlers
+server.on('connection', function (socket) {
+
+    // synchronize (send) the game data to the browser client
+    server.emit('gameUpdated', game);
+
+    // when the client send his credentials
+    socket.on('joinTheGame', function (msg) {
+
+        if (game.hasPlayerWithNickname(msg) == false) {
+            game.addPlayer(msg);
+        }
+
+        // synchronize (send) the game data with the browser client
+        server.emit('gameUpdated', game);
+
+        // send the new nickname to the group
+        peer.sendMessage('joinTheGame', function (err) {
+
+        });
     });
 
-    // open the browser to show the client interface
-    open('http://localhost:8080');
+
+
+
 });
