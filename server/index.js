@@ -6,29 +6,24 @@ var open = require('open'),
 // open the browser client
 open('http://localhost:8080');
 
-peer.emit('getTheGame', null, function (err) {
-    if (err) throw err;
-});
-
-
-
 // peer message handlers
-peer.on('message', function (msg, rinfo) {
+peer.socket.on('connection', function (socket) {
 
-    console.log('peer got: ' + msg + ' from ' + rinfo.address + ':' + rinfo.port);
+    // synchronize with the generator
+    peer.emit('getTheGame', null);
 
-    if (msg == 'joinTheGame') {
-        // TODO: add a joinTheGame message handler
-    }
+    peer.socket.on('joinTheGame', function (msg) {
+        console.log('joinTheGame', msg);
+        // TODO:  handle the joinTheGame event
+    });
 
-    // TODO: add a guess message handler
-    if (msg == 'guess') {
+    peer.socket.on('guess', function (msg) {
+        // TODO:  handle the guess event
+    });
 
-    }
-
-    if (msg == 'gameUpdated') {
-        // TODO: add a gameUpdate message handler
-    }
+    peer.socket.on('getTheGame', function (msg) {
+        // TODO: handle the getTheGame event
+    });
 });
 
 // server message handlers
@@ -48,12 +43,8 @@ server.on('connection', function (socket) {
         server.emit('gameUpdated', game);
 
         // send the new nickname to the group
-        peer.sendMessage('joinTheGame', function (err) {
+        peer.emit('joinTheGame', msg, function (err) {
 
         });
     });
-
-
-
-
 });
