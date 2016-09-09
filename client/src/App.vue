@@ -39,6 +39,7 @@
 
             // handler for game updates
             this.$socket.on('gameUpdated', function (game) {
+                console.log(game);
                 self.game = game;
             });
         }
