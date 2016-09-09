@@ -58,7 +58,7 @@ var emit = function (event, data, callback) {
     var buffer = Buffer.from(str);
 
     // send the buffer to the group at the specified port
-    socket.send(buffer, config.multicastPort, config.multicastGroup, function (err) {
+    socket.send(buffer, 0, buffer.length, config.multicastPort, config.multicastGroup, function (err) {
         if (typeof callback == 'function') {
             callback(err);
         }
@@ -68,9 +68,9 @@ var emit = function (event, data, callback) {
 /**
  * Handle a message received from the group
  * @param buffer the message received
- * @param remoteInfo remote address information
+ * @param remote remote address information
  */
-var receive = function (buffer, remoteInfo) {
+var receive = function (buffer, remote) {
 
     // TODO: decrypt the message received here!
 
@@ -78,7 +78,7 @@ var receive = function (buffer, remoteInfo) {
     var obj = JSON.parse(buffer.toString());
 
     if (config.debug) {
-        console.log('received an', obj.event, 'from', remoteInfo, 'with', obj.data);
+        console.log('received an', obj.event, 'from', remote.address + ':' + remote.port);
     }
 
     // emit the custom event

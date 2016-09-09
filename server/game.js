@@ -38,7 +38,7 @@ var players = [];
  * @returns {boolean}
  */
 var iAmTheGenerator = function () {
-    return myID === generatorId;
+    return myID === generatorId && myID !== -1;
 };
 
 /**
@@ -63,7 +63,7 @@ var setGeneratorId = function (id) {
  * @returns {boolean}
  */
 var hasPlayerWithId = function (id) {
-    for (var i = 0; i < this.players.length; i++) {
+    for (var i = 0; i < players.length; i++) {
         if (this.players[i].id == id) {
             return true;
         }
