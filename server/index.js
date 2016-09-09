@@ -7,26 +7,25 @@ var open = require('open'),
 open('http://localhost:8080');
 
 // peer <-> peer message handlers
-peer.socket.on('connection', function (socket) {
+peer.socket.on('listening', function () {
 
-    // synchronize with the generator
     peer.emit('getTheGame', null);
 
-    socket.on('gameUpdated', function (msg) {
+    peer.socket.on('gameUpdated', function (msg) {
         console.log('joinTheGame', msg);
         // TODO:  handle the joinTheGame event
     });
 
-    socket.on('joinTheGame', function (msg) {
+    peer.socket.on('joinTheGame', function (msg) {
         console.log(msg, 'wants to join the game!');
         // TODO:  handle the joinTheGame event
     });
 
-    socket.on('guess', function (msg) {
+    peer.socket.on('guess', function (msg) {
         // TODO:  handle the guess event
     });
 
-    socket.on('getTheGame', function (msg) {
+    peer.socket.on('getTheGame', function (msg) {
         // TODO: handle the getTheGame event
     });
 });
