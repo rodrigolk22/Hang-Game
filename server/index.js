@@ -1,4 +1,5 @@
-var open = require('open'),
+var config = require('./config'),
+    open = require('open'),
     game = require('./game'),
     peer = require('./peer'), // multicast socket for the peer
     browser = require('socket.io')(8081); // socket for the browser client
@@ -9,43 +10,75 @@ open('http://localhost:8080');
 // peer <-> peer message handlers
 peer.socket.on('listening', function () {
 
-    peer.emit('getTheGame', null);
+    // do initial game sync
+    (function () {
+        game.genUniqueID(function (myID) {
 
-    peer.socket.on('gameUpdated', function (msg) {
-        console.log('joinTheGame', msg);
-        // TODO:  handle the joinTheGame event
+            // request to join the game
+            peer.emit('joinTheGame', {id: myID});
+
+            if (config.debug) {
+                console.log('requested to join the game with ID', myID, '...');
+                console.log('waiting 5s...');
+            }
+
+            // wait for 5s to sync with the peers
+            setTimeout(function () {
+                if (!game.hasGenerator()) {
+                    console.log('now, I am the generator!');
+                    game.setGeneratorId(myID);
+                    alertBrowser();
+                    alertPeers();
+                }
+            }, 5000);
+        });
+    })();
+
+    // when the game has been updated
+    peer.socket.on('gameUpdated', function (data) {
+        game.updateGameData(data);
+        alertBrowser();
     });
 
-    peer.socket.on('joinTheGame', function (msg) {
-        console.log(msg, 'wants to join the game!');
-        // TODO:  handle the joinTheGame event
+    // when someone has joined the game
+    peer.socket.on('joinTheGame', function (data) {
+        if (game.iAmTheGenerator()) {
+            console.log(data, 'joined the game!');
+            game.addPlayer(data.id);
+            alertPeers();
+        }
     });
 
-    peer.socket.on('guess', function (msg) {
+    peer.socket.on('guess', function (data) {
         // TODO:  handle the guess event
-    });
-
-    peer.socket.on('getTheGame', function (msg) {
-        // TODO: handle the getTheGame event
     });
 });
 
 // server <-> browser message handlers
 browser.on('connection', function (socket) {
 
-    // send the game data to the browser client
-    browser.emit('gameUpdated', game.getGameData());
-
-    // when the browser client send his credentials
-    socket.on('joinTheGame', function (msg) {
-        peer.emit('joinTheGame', msg);
-    });
+    alertBrowser(); // update the client
 
     // when the browser client send a guess
     socket.on('guess', function (msg) {
         peer.emit('guess', msg);
     });
 });
+
+/**
+ * Alert the peers that the game has been updated
+ */
+var alertPeers = function () {
+    peer.emit('gameUpdated', game.getGameData());
+};
+
+/**
+ * Alert the browser that the game has been updated
+ */
+var alertBrowser = function () {
+    browser.emit('gameUpdated', game.getGameData());
+};
+
 /*
 var pipeEvent = function (fromSocket, toSocket, type) {
     fromSocket.on(type, function (msg) {
