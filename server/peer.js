@@ -67,22 +67,22 @@ var emit = function (event, data, callback) {
 
 /**
  * Handle a message received from the group
- * @param message the message received
+ * @param buffer the message received
  * @param remoteInfo remote address information
  */
-var receive = function (message, remoteInfo) {
+var receive = function (buffer, remoteInfo) {
 
     // TODO: decrypt the message received here!
 
     // transform the message string into an object
-    var obj = JSON.parse(msg);
+    var obj = JSON.parse(buffer.toString());
 
     if (config.debug) {
-        console.log('received an', obj.type, 'from', remoteInfo, 'with', obj.message);
+        console.log('received an', obj.event, 'from', remoteInfo, 'with', obj.data);
     }
 
     // emit the custom event
-    socket.emit(obj.type, obj.message);
+    socket.emit(obj.event, obj.data);
 };
 
 // Messages handler
