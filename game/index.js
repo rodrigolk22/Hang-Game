@@ -20,12 +20,9 @@ game.init(function () {
     // wait for 5s to sync with the peers
     setTimeout(function () {
         if (game.statusIs('NOT_SYNCED')) {
-
-            game.setGeneratorId(myID);
+            game.addPlayer(myID);
             game.setStatus('WAITING_PLAYERS');
-
             debug('now, I am the generator!');
-
             alertBrowser();
             alertPeers();
         } else {
@@ -40,7 +37,6 @@ multicast.socket.on('listening', function () {
     // when the game has been updated
     multicast.socket.on('gameUpdated', function (data) {
         if (game.iAmTheGenerator() == false) {
-            console.log(data);
             game.setGameData(data);
             alertBrowser();
         }
@@ -49,7 +45,14 @@ multicast.socket.on('listening', function () {
     // when someone has joined the game
     multicast.socket.on('joinTheGame', function (data) {
         if (game.iAmTheGenerator()) {
+
             game.addPlayer(data.id);
+
+            // start the game if not started yet
+            if (game.statusIs('WAITING_PLAYERS') && game.canStart()) {
+                game.startRound();
+            }
+
             alertPeers();
         }
     });

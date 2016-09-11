@@ -5,12 +5,6 @@
 var status = 'NOT_SYNCED';
 
 /**
- * ID of the generator peer
- * @type {number}
- */
-var generatorID = -1;
-
-/**
  * My peer ID
  * @type {number}
  */
@@ -27,6 +21,12 @@ var myNickname = '';
  * @type {Array}
  */
 var players = [];
+
+/**
+ * Game generators
+ * @type {Array}
+ */
+var generators = [];
 
 var statuses = [
     'NOT_SYNCED', // when the node dont know the game data
@@ -55,20 +55,16 @@ var statusIs = function (statusIs) {
     return status === statusIs;
 };
 
-/**
- * Return true if my machine is the generator process
- * @returns {boolean}
- */
-var iAmTheGenerator = function () {
-    return myID === generatorID && myID !== -1;
+var currentGeneratorId = function () {
+    return generators[0] || null;
 };
 
 /**
- * Return true if the game already has an generator peer
+ * Return true if my process is the generator
  * @returns {boolean}
  */
-var hasGenerator = function () {
-    return generatorID !== -1;
+var iAmTheGenerator = function () {
+    return currentGeneratorId() == myID && myID !== -1;
 };
 
 /**
@@ -103,6 +99,8 @@ var addPlayer = function (id) {
         throw ('an another player with id ' + id + ' already joined the game');
     }
 
+    generators.push(id);
+
     players.push({
         id: id,
         nickname: '',
@@ -134,7 +132,8 @@ var getPlayer = function (id) {
 var getGameData = function () {
     return {
         status: status,
-        players: players
+        players: players,
+        generators: generators
     }
 };
 
@@ -145,6 +144,7 @@ var getGameData = function () {
 var setGameData = function (gameData) {
     status = gameData.status;
     players = gameData.players;
+    generators = gameData.generators;
 };
 
 /**
@@ -160,7 +160,11 @@ var getMyId = function () {
  */
 var canStart = function () {
     // The game only starts if there is at least 3 peers (one generator and 2 players)
-    return players.length >= 3;
+    return players.length >= 3 && hasGenerator();
+};
+
+var startRound = function () {
+
 };
 
 /**
@@ -183,10 +187,9 @@ module.exports = {
     setStatus: setStatus,
 
     canStart: canStart,
+    startRound: startRound,
 
-    setGeneratorId: setGeneratorId,
     iAmTheGenerator: iAmTheGenerator,
-    hasGenerator: hasGenerator,
 
     getGameData: getGameData,
     setGameData: setGameData,
