@@ -76,6 +76,7 @@ var emit = function (event, data, callback) {
 
     // Object to be sent
     var obj = {
+        pid: process.pid, // required to run multiple games on same machine
         event: event,
         data: data
     };
@@ -118,13 +119,13 @@ var receive = function (buffer, remote) {
     // discard the message if it was sent by this process
     if (hasDiffFromLastMessageSent(message)) {
         if (config.debug) {
-            console.log('discarded message', obj.event, 'from', remote.address + ':' + remote.port);
+            console.log('discarded message', obj.event, 'from', remote.address + ':' + remote.port + '@' + obj.pid);
         }
         return;
     }
 
     if (config.debug) {
-        console.log('received an', obj.event, 'from', remote.address + ':' + remote.port);
+        console.log('received an', obj.event, 'from', remote.address + ':' + remote.port + '@' + obj.pid);
     }
 
     // emit the custom event
