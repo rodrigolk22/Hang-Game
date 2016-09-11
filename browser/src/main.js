@@ -15,8 +15,6 @@ function getMetaContentByName(name,content){
 var serverPort = getMetaContentByName('port');
 Vue.use(VueSocketio, 'http://localhost:' + serverPort);
 
-alert('using port ' + serverPort);
-
 new Vue({
   el: '#app',
   render: h => h(App)

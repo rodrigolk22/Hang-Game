@@ -1,11 +1,36 @@
 var dgram = require('dgram');
 var config = require('./../config');
 
-// UDP socket using IPV4 protocol
+/**
+ * An multicast socket
+ */
 var socket = dgram.createSocket({
     type: 'udp4',
     reuseAddr: true
 });
+
+/**
+ * Store a reference to the last message sent
+ * @type {null}
+ */
+var lastMessageSent = null;
+
+/**
+ * Set the message as the last message sent
+ * @param message
+ */
+var setLastMessageSent = function (message) {
+    lastMessageSent = message;
+};
+
+/**
+ * Compare an message to the last message sent
+ * @param message
+ * @returns {boolean}
+ */
+var hasDiffFromLastMessageSent = function (message) {
+    return lastMessageSent == message;
+};
 
 // bind the multicast socket to an defined port
 socket.bind(config.multicastPort, function () {
@@ -49,16 +74,24 @@ socket.on('close', function ()  {
  */
 var emit = function (event, data, callback) {
 
-    // transform the object in a string to send through the wire
-    var str = JSON.stringify({
+    // Object to be sent
+    var obj = {
         event: event,
         data: data
-    });
+    };
+
+    // transform the object in a string to send through the wire
+    var message = JSON.stringify(obj);
+
+    // set this message as the lastMessageSent
+    setLastMessageSent(message);
+
 
     // TODO: encrypt the message emitted here!
 
+
     // create a buffer object from the string
-    var buffer = Buffer.from(str);
+    var buffer = Buffer.from(message);
 
     // send the buffer to the group at the specified port
     socket.send(buffer, 0, buffer.length, config.multicastPort, config.multicastGroup, function (err) {
@@ -77,8 +110,18 @@ var receive = function (buffer, remote) {
 
     // TODO: decrypt the message received here!
 
+    var message = buffer.toString();
+
     // transform the message string into an object
-    var obj = JSON.parse(buffer.toString());
+    var obj = JSON.parse(message);
+
+    // discard the message if it was sent by this process
+    if (hasDiffFromLastMessageSent(message)) {
+        if (config.debug) {
+            console.log('discarded message', obj.event, 'from', remote.address + ':' + remote.port);
+        }
+        return;
+    }
 
     if (config.debug) {
         console.log('received an', obj.event, 'from', remote.address + ':' + remote.port);
