@@ -103,14 +103,14 @@ var hasPlayerWithId = function (id) {
 var addPlayer = function (id) {
 
     if (hasPlayerWithId(id)) {
-        console.log('This player already exists!');
-        return false;
+        throw ('an another player with id ' + id + ' already joined the game');
     }
 
     players.push({
         id: id,
         nickname: '',
-        points: 0
+        gamePoints: 0,
+        roundPoints: 0
     });
 
     return true;
@@ -118,7 +118,7 @@ var addPlayer = function (id) {
 
 /**
  * Get the player with ID
- * @param nickname
+ * @param id
  * @returns {*}
  */
 var getPlayer = function (id) {
