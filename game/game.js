@@ -1,16 +1,14 @@
-var machineId = require('ee-machine-id');
-
 /**
- * The game has started?
+ * Status of the game (see 'statuses' for the possible values)
  * @type {boolean}
  */
-var started = false;
+var status = 'NOT_SYNCED';
 
 /**
  * ID of the generator peer
  * @type {number}
  */
-var generatorId = -1;
+var generatorID = -1;
 
 /**
  * My peer ID
@@ -33,12 +31,39 @@ var myNickname = '';
  */
 var players = [];
 
+var statuses = [
+    'NOT_SYNCED', // when the node dont know the game data
+    'WAITING_PLAYERS', // when the game not start because has not enought players
+    'WAITING_GUESS', // waiting a guess
+    // ...
+];
+
+/**
+ * Change the game status
+ * @param newStatus
+ */
+var setStatus = function (newStatus) {
+    if (statuses.indexOf(newStatus) == -1) {
+        throw (status + " isn't a valid game status");
+    }
+    status = newStatus;
+};
+
+/**
+ * Verify if the current game status is equals an status
+ * @param statusIs
+ * @returns {boolean}
+ */
+var statusIs = function (statusIs) {
+    return status === statusIs;
+};
+
 /**
  * Return true if my machine is the generator process
  * @returns {boolean}
  */
 var iAmTheGenerator = function () {
-    return myID === generatorId && myID !== -1;
+    return myID === generatorID && myID !== -1;
 };
 
 /**
@@ -46,7 +71,7 @@ var iAmTheGenerator = function () {
  * @returns {boolean}
  */
 var hasGenerator = function () {
-    return generatorId !== -1;
+    return generatorID !== -1;
 };
 
 /**
@@ -54,7 +79,7 @@ var hasGenerator = function () {
  * @param id
  */
 var setGeneratorId = function (id) {
-    generatorId = id;
+    generatorID = id;
 };
 
 /**
@@ -64,7 +89,7 @@ var setGeneratorId = function (id) {
  */
 var hasPlayerWithId = function (id) {
     for (var i = 0; i < players.length; i++) {
-        if (this.players[i].id == id) {
+        if (players[i].id == id) {
             return true;
         }
     }
@@ -97,9 +122,9 @@ var addPlayer = function (id) {
  * @returns {*}
  */
 var getPlayer = function (id) {
-    for (var i = 0; i < this.players.length; i++) {
-        if (this.players[i].id == id) {
-            return this.players[i];
+    for (var i = 0; i < players.length; i++) {
+        if (players[i].id == id) {
+            return players[i];
         }
     }
     return null;
@@ -111,8 +136,7 @@ var getPlayer = function (id) {
  */
 var getGameData = function () {
     return {
-        started: started,
-        myNickname: myNickname,
+        status: status,
         players: players
     }
 };
@@ -121,64 +145,57 @@ var getGameData = function () {
  * Update the game data from gameData object
  * @param gameData
  */
-var updateGameData = function (gameData) {
-    // TODO: get the gameData and update this file variables
+var setGameData = function (gameData) {
+    status = gameData.status;
+    players = gameData.players;
 };
 
 /**
  * Return this peer ID
  */
 var getMyId = function () {
-    return this.myID;
-};
-
-/**
- * Return true if the game has already started
- * The game only starts if there is at least 3 peers (one generator and 2 players)
- * @returns {boolean}
- */
-hasStarted = function () {
-    return started === true;
-};
-
-/**
- * Set the game start
- * @param boolean
- */
-setStarted = function (boolean) {
-    started = boolean;
+    return myID;
 };
 
 /**
  * Return true if the game can be started
  * @returns {boolean}
  */
-canStart = function () {
+var canStart = function () {
     // The game only starts if there is at least 3 peers (one generator and 2 players)
     return players.length >= 3;
 };
 
-// prepare the game data
-var genUniqueID = function (callback) {
+/**
+ * Initiate the game data for this process
+ * @param successCallback
+ */
+var init = function (successCallback) {
 
-    // create this peer ID
-    machineId.get(function (id) {
-
-        // set this peer ID
-        this.myID = id;
-
-        // execute callback
-        callback(id);
+    // get the unique identificator for this machine + PID
+    require('./helpers/identificator')(function (id) {
+        myID = id;
+        successCallback();
     });
 };
 
 module.exports = {
+    init: init,
+
+    statusIs: statusIs,
+    setStatus: setStatus,
+
+    canStart: canStart,
+
     setGeneratorId: setGeneratorId,
     iAmTheGenerator: iAmTheGenerator,
     hasGenerator: hasGenerator,
-    genUniqueID: genUniqueID,
+
     getGameData: getGameData,
-    updateGameData: updateGameData,
+    setGameData: setGameData,
+
     addPlayer: addPlayer,
-    getPlayer: getPlayer
+    getPlayer: getPlayer,
+
+    getMyId: getMyId
 };

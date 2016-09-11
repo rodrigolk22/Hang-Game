@@ -1,52 +1,60 @@
 var config = require('./../config'),
+    debug = require('./helpers/debug'),
     game = require('./game'),
     multicast = require('./multicast'), // multicast socket for the peer
     browser = require('socket.io')(config.serverPort); // socket for the browser client
 
+// do initial game sync
+game.init(function () {
+
+    var myID = game.getMyId();
+
+    // request to join the game
+    multicast.emit('joinTheGame', {
+        id: myID
+    });
+
+    debug('requested to join the game with ID ' + myID);
+    debug('waiting 5s...');
+
+    // wait for 5s to sync with the peers
+    setTimeout(function () {
+        if (game.statusIs('NOT_SYNCED')) {
+
+            game.setGeneratorId(myID);
+            game.setStatus('WAITING_PLAYERS');
+
+            debug('now, I am the generator!');
+
+            alertBrowser();
+            alertPeers();
+        } else {
+            debug('now, I am an player!');
+        }
+    }, 5000);
+});
+
 // peer <-> peer message handlers
 multicast.socket.on('listening', function () {
 
-    // do initial game sync
-    (function () {
-        game.genUniqueID(function (myID) {
-
-            // request to join the game
-            multicast.emit('joinTheGame', {
-                id: myID
-            });
-
-            if (config.debug) {
-                console.log('requested to join the game with ID', myID, '...');
-                console.log('waiting 5s...');
-            }
-
-            // wait for 5s to sync with the peers
-            setTimeout(function () {
-                if (!game.hasGenerator()) {
-                    console.log('now, I am the generator!');
-                    game.setGeneratorId(myID);
-                    alertBrowser();
-                    alertPeers();
-                }
-            }, 5000);
-        });
-    })();
-
     // when the game has been updated
     multicast.socket.on('gameUpdated', function (data) {
-        game.updateGameData(data);
-        alertBrowser();
+        if (game.iAmTheGenerator() == false) {
+            console.log(data);
+            game.setGameData(data);
+            alertBrowser();
+        }
     });
 
     // when someone has joined the game
     multicast.socket.on('joinTheGame', function (data) {
         if (game.iAmTheGenerator()) {
-            console.log(data, 'joined the game!');
             game.addPlayer(data.id);
             alertPeers();
         }
     });
 
+    // when someone has guessed
     multicast.socket.on('guess', function (data) {
         // TODO:  handle the guess event
     });
