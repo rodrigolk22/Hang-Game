@@ -12,9 +12,6 @@ var generatorID = -1;
 
 /**
  * My peer ID
- * is a unique ID for the machine running the NodeJS process.
- * The ID is created using all MAC addresses of the system, the cpu model and the systems total memory amount.
- * The ID is returned in form of a md5 hash.
  * @type {number}
  */
 var myID = -1;
