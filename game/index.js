@@ -1,4 +1,4 @@
-var config = require('./config'),
+var config = require('./../config'),
     game = require('./game'),
     peer = require('./peer'), // multicast socket for the peer
     browser = require('socket.io')(config.serverPort); // socket for the browser client
@@ -11,7 +11,9 @@ peer.socket.on('listening', function () {
         game.genUniqueID(function (myID) {
 
             // request to join the game
-            peer.emit('joinTheGame', {id: myID});
+            peer.emit('joinTheGame', {
+                id: myID
+            });
 
             if (config.debug) {
                 console.log('requested to join the game with ID', myID, '...');
@@ -52,8 +54,6 @@ peer.socket.on('listening', function () {
 
 // server <-> browser message handlers
 browser.on('connection', function (socket) {
-
-    alertBrowser(); // update the client
 
     // when the browser client send a guess
     socket.on('guess', function (msg) {

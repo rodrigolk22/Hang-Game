@@ -1,5 +1,5 @@
 var dgram = require('dgram');
-var config = require('./config');
+var config = require('./../config');
 
 // UDP socket using IPV4 protocol
 var socket = dgram.createSocket({
@@ -55,7 +55,7 @@ var emit = function (event, data, callback) {
         data: data
     });
 
-    // TODO: encrypt the message received here!
+    // TODO: encrypt the message emitted here!
 
     // create a buffer object from the string
     var buffer = Buffer.from(str);
