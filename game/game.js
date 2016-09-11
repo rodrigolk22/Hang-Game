@@ -1,3 +1,5 @@
+var _ = require('underscore');
+
 /**
  * Status of the game (see 'statuses' for the possible values)
  * @type {boolean}
@@ -55,8 +57,13 @@ var statusIs = function (statusIs) {
     return status === statusIs;
 };
 
+/**
+ * Get the gurrent generator ID
+ * return null if there is no generator yet
+ * @returns {*|null}
+ */
 var currentGeneratorId = function () {
-    return generators[0] || null;
+    return _.first(generators) || null;
 };
 
 /**
@@ -65,14 +72,6 @@ var currentGeneratorId = function () {
  */
 var iAmTheGenerator = function () {
     return currentGeneratorId() == myID && myID !== -1;
-};
-
-/**
- * Set the game generator peer ID
- * @param id
- */
-var setGeneratorId = function (id) {
-    generatorID = id;
 };
 
 /**
@@ -96,7 +95,7 @@ var hasPlayerWithId = function (id) {
 var addPlayer = function (id) {
 
     if (hasPlayerWithId(id)) {
-        throw ('an another player with id ' + id + ' already joined the game');
+        throw ('another player with id ' + id + ' already joined the game');
     }
 
     generators.push(id);
@@ -164,6 +163,8 @@ var canStart = function () {
 };
 
 var startRound = function () {
+
+    // TODO: this algorithm
 
 };
 
