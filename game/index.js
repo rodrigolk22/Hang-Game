@@ -36,7 +36,7 @@ multicast.socket.on('listening', function () {
 
     // when the game has been updated
     multicast.socket.on('gameUpdated', function (data) {
-        if (game.iAmTheGenerator() == false) {
+        if (game.iAmAnPlayer()) {
             game.setGameData(data);
             alertBrowser();
         }
@@ -48,23 +48,74 @@ multicast.socket.on('listening', function () {
 
             game.addPlayer(data.id);
 
-            // start the game if not started yet
+            // start the game if is not started yet
             if (game.statusIs('WAITING_PLAYERS') && game.canStart()) {
                 game.startRound();
             }
 
             alertPeers();
+            alertBrowser();
         }
     });
 
-    // when someone has guessed
+    // when someone has sent a choice (an character)
+    multicast.socket.on('choice', function (data) {
+        if (game.iAmTheGenerator() && game.statusIs('WAITING_CHOICE')) {
+
+            // TODO: verify if the user that has sent a choice is the correct user
+
+            var player = game.getCurrentPlayer();
+
+            var char = data.choice;
+
+            game.markCharacterAsNonavailable(char);
+            if (game.currentWord.has(char)) {
+                game.currentWord.show(char);
+                player.roundPoints += 1;
+            }
+
+            game.setStatus('WAITING_GUESS');
+            game.setTimer(10000);
+
+            alertBrowser();
+            alertPeers();
+        }
+    });
+
+    // when someone has guessed (an word)
     multicast.socket.on('guess', function (data) {
-        // TODO:  handle the guess event
+        if (game.iAmTheGenerator() && game.statusIs('WAITING_GUESS')) {
+
+            // TODO: verify if the user that has guessed is the correct user
+
+            var player = game.getCurrentPlayer();
+
+            var word = data.word;
+
+            if (word == null) {
+                // TODO: change to the next player
+            } else if (game.isCorrectGuess(word)) {
+
+                // TODO: add points to this player
+                // TODO: announce the winner
+                // TODO: create a new game
+
+                alertPeers();
+                alertBrowser();
+            } else {
+                // TODO: remove points
+            }
+        }
     });
 });
 
 // server <-> browser message handlers
 browser.on('connection', function (socket) {
+
+    // when the browser client send a choice
+    socket.on('choice', function (msg) {
+        multicast.emit('choice', msg);
+    });
 
     // when the browser client send a guess
     socket.on('guess', function (msg) {

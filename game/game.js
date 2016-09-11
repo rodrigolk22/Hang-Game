@@ -1,4 +1,5 @@
-var _ = require('underscore');
+var _ = require('underscore'),
+    alphabet = require('./helpers/alphabet');
 
 /**
  * Status of the game (see 'statuses' for the possible values)
@@ -72,6 +73,10 @@ var currentGeneratorId = function () {
  */
 var iAmTheGenerator = function () {
     return currentGeneratorId() == myID && myID !== -1;
+};
+
+var iAmAnPlayer = function () {
+    return currentGeneratorId() != myID && myID !== -1;
 };
 
 /**
@@ -164,6 +169,10 @@ var canStart = function () {
 
 var startRound = function () {
 
+    // TODO: concatenar pontos da rodada anterior
+    // TODO: zerar pontos da rodada anterior
+    //
+
     // TODO: this algorithm
 
 };
@@ -191,6 +200,7 @@ module.exports = {
     startRound: startRound,
 
     iAmTheGenerator: iAmTheGenerator,
+    iAmAnPlayer: iAmAnPlayer,
 
     getGameData: getGameData,
     setGameData: setGameData,
