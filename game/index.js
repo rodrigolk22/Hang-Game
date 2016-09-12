@@ -51,7 +51,7 @@ multicast.socket.on('listening', function () {
     });
 
     // when the last generator has been changed
-    multicast.socket.on('changeGenerator', function (data) {
+    multicast.socket.on('nextGenerator', function (data) {
         game.setGameData(data);
 
         // if i Am the new generator
@@ -110,26 +110,24 @@ multicast.socket.on('listening', function () {
 
             if (guess == null) {
                 // pass the turn
-                game.changePlayer();
+                game.nextPlayer();
                 game.startWaitingChoice();
 
             } else if (game.isCorrectGuess(guess)) {
+
                 // guessed the correct word, add +5 points to the player and end the round
                 player.roundPoints += 5;
-                game.endRound();
 
-                // change the generator after 10s
-                setTimeout(function () {
-                    game.changeGenerator();
-                    multicast.emit('changeGenerator', game.getGameData());
-                }, 10000);
+                game.endRound(function () {
+                    multicast.emit('nextGenerator', game.getGameData());
+                });
 
                 return;
 
             } else {
                 // guessed the wrong word
                 player.roundPoints -= 1;
-                game.changePlayer();
+                game.nextPlayer();
                 game.startWaitingChoice();
             }
 

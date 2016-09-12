@@ -236,19 +236,19 @@ var canStart = function () {
 /**
  * Get and set the next generator
  */
-var changeGenerator = function () {
+var nextGenerator = function () {
     circularList.next(generators);
 };
 
 /**
  * Get and set the next player
  */
-var changePlayer = function () {
+var nextPlayer = function () {
     circularList.next(players);
 
     // the next player cant be the generator
     if (getCurrentPlayer().id == getCurrentGeneratorId()) {
-        changePlayer(); // recursive
+        nextPlayer(); // recursive
     }
 
     setTimer(10000);
@@ -271,7 +271,7 @@ var startRound = function () {
     });
 
     // set the next player
-    changePlayer();
+    nextPlayer();
 
     // generate a new word, and update the supressed word
     currentWord = generator.generate();
@@ -288,8 +288,9 @@ var startRound = function () {
 
 /**
  * End a game round
+ * @param callback executed 10s after announced the winner
  */
-var endRound = function () {
+var endRound = function (callback) {
 
     // sum players total points
     _.each(players, function (player) {
@@ -298,6 +299,12 @@ var endRound = function () {
 
     // change the status to announcing winner
     setStatus('ANNOUNCING_WINNER');
+
+    // change the generator after 10s
+    setTimeout(function () {
+        game.nextGenerator();
+        callback();
+    }, 10000);
 };
 
 /**
@@ -381,8 +388,8 @@ module.exports = {
     init: init,
     startRound: startRound,
     endRound: endRound,
-    changePlayer: changePlayer,
-    changeGenerator: changeGenerator,
+    nextPlayer: nextPlayer,
+    nextGenerator: nextGenerator,
 
     markCharacterAsNonavailable: markCharacterAsNonavailable,
     countCharactersInCurrentWord: countCharactersInCurrentWord,
@@ -391,7 +398,6 @@ module.exports = {
     isCorrectGuess: isCorrectGuess,
 
     statusIs: statusIs,
-    setStatus: setStatus,
 
     iAmTheGenerator: iAmTheGenerator,
     iAmAnPlayer: iAmAnPlayer,
