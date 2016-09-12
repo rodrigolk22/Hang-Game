@@ -1,5 +1,6 @@
 var _ = require('underscore'),
-    alphabet = require('./helpers/alphabet');
+    alphabet = require('./helpers/alphabet'),
+    generator = require('./helpers/generator');
 
 /**
  * Status of the game (see 'statuses' for the possible values)
@@ -38,6 +39,10 @@ var statuses = [
     // ...
 ];
 
+var currentWord = null;
+
+var usedCharacters = [];
+
 /**
  * Change the game status
  * @param newStatus
@@ -75,6 +80,10 @@ var iAmTheGenerator = function () {
     return currentGeneratorId() == myID && myID !== -1;
 };
 
+/**
+ * Return true if my process is an player
+ * @returns {boolean}
+ */
 var iAmAnPlayer = function () {
     return currentGeneratorId() != myID && myID !== -1;
 };
@@ -169,12 +178,16 @@ var canStart = function () {
 
 var startRound = function () {
 
-    // TODO: concatenar pontos da rodada anterior
-    // TODO: zerar pontos da rodada anterior
+    // TODO: get the first player
+
     //
 
-    // TODO: this algorithm
+    // TODO: concatenar pontos da rodada anterior
+    // TODO: zerar pontos da rodada anterior
 
+
+    // generate a new word
+    currentWord = generator.generate();
 };
 
 /**
