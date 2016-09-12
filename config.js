@@ -8,8 +8,8 @@ module.exports = {
     multicastPort: 6789,
     multicastGroup: '228.5.6.7',
     multicastTTL: 128,
-    multicastLoopback: true, // return messages to sender interface
-    debug: true,
+    multicastLoopback: false, // return messages to sender interface
+    debug: false,
 
     minPlayers: 3, // minimum number of players
     syncTime: 2000, // maximum time to wait for the first sync
