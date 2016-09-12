@@ -1,8 +1,13 @@
 var config = require('./../config'),
+    prompt = require('prompt'),
+    colors = require("colors/safe"),
     debug = require('./helpers/debug'),
     game = require('./game'),
     multicast = require('./multicast'), // multicast socket for the peer
     browser = require('socket.io')(config.serverPort); // socket for the browser client
+
+// start the prompt
+prompt.start();
 
 /**
  * When there is no enought players until timeout
@@ -90,27 +95,37 @@ game.events.on('playerRemoved', function () {
 // do initial game sync
 game.init(function () {
 
-    var player = {
-        id: game.getMyId(),
-        nickname: 'ranbo ' + Math.random() // TODO: remove this hardcoded thing
-    };
-
-    // request to join the game
-    multicast.emit('joinTheGame', player);
-
-    // wait for syncTime to sync with the peers
-    setTimeout(function () {
-        if (game.statusIs('NOT_SYNCED')) {
-            game.addPlayer(player);
-            game.startWaitingPlayers();
-            alertPeers();
-            debug('now, I am the generator!');
-        } else {
-            debug('now, I am an player!');
+    // get the nickname from terminal
+    prompt.get({
+        properties: {
+            nickname: {
+                description: colors.magenta("What is your name?")
+            }
         }
+    }, function (err, result) {
 
-        alertBrowser();
-    }, config.syncTime);
+        var player = {
+            id: game.getMyId(),
+            nickname: result.nickname
+        };
+
+        // request to join the game
+        multicast.emit('joinTheGame', player);
+
+        // wait for syncTime to sync with the peers
+        setTimeout(function () {
+            if (game.statusIs('NOT_SYNCED')) {
+                game.addPlayer(player);
+                game.startWaitingPlayers();
+                alertPeers();
+                debug('now, I am the generator!');
+            } else {
+                debug('now, I am an player!');
+            }
+
+            alertBrowser();
+        }, config.syncTime);
+    });
 });
 
 // peer <-> peer message handlers
