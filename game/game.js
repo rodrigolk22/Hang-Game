@@ -1,4 +1,5 @@
 var _ = require('underscore'),
+    config = require('./../config'),
     alphabet = require('./helpers/alphabet'),
     generator = require('./helpers/generator'),
     circularList = require('./helpers/circularList');
@@ -229,8 +230,8 @@ var getMyId = function () {
  * @returns {boolean}
  */
 var canStart = function () {
-    // The game only starts if there is at least 3 peers (one generator and 2 players)
-    return players.length >= 3 && hasGenerator();
+    // The game only starts if there is at least config.minPlayers and has an elected generator
+    return players.length >= config.minPlayers && hasGenerator();
 };
 
 /**
@@ -346,8 +347,10 @@ var markCharacterAsNonavailable = function (character) {
     // remove the character from availableCharacters array
     var index = availableCharacters.indexOf(character);
     if (index > -1) {
-        availableCharacters.slice(index, 1);
+        availableCharacters.splice(index, 1);
     }
+
+    console.log(index, availableCharacters);
 
     // update the supressed word
     updateSupressedWord();
