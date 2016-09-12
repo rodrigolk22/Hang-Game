@@ -7,19 +7,19 @@
             <br/>
             <turn-choice v-if="isWaitingMyChoice" :available-characters="game.availableCharacters"></turn-choice>
             <turn-guess v-if="isWaitingMyGuess"></turn-guess>
-        </div>
-        <div>
-            <player-list :players="game.players"></player-list>
-        </div>
-        <div>{{  }}</div>
 
-        <pre>{{ $data | json }}</pre>
+            <div v-if="iAmTheGenerator" class="alert alert-warning">
+                I Am the Generator!!!
+            </div>
+        </div>
+        <div class="box">
+            <player-list :players="game.players" :generator="game.currentGenerator" :me="game.me"></player-list>
+        </div>
     </div>
 </template>
 
 <script>
     import PlayerList from './components/PlayerList.vue'
-    import LoginForm from './components/LoginForm.vue'
     import TurnChoice from './components/TurnChoice.vue'
     import TurnGuess from './components/TurnGuess.vue'
     export default {
@@ -64,6 +64,12 @@
                 }
                 return this.game.currentPlayer.id == this.game.me.id;
             },
+            iAmTheGenerator: function () {
+                if (this.game == null || this.game.currentGenerator == null || this.game.me == null) {
+                    return null;
+                }
+                return this.game.currentGenerator.id == this.game.me.id;
+            },
             isWaitingMyChoice: function () {
                 return this.iAmTheCurrentPlayer && this.game.status == 'WAITING_CHOICE';
             },
@@ -73,7 +79,7 @@
         },
         components: {
             TurnChoice, TurnGuess,
-            PlayerList, LoginForm
+            PlayerList
         },
         created: function () {
             var self = this;
@@ -113,8 +119,25 @@
     }
 
     .box {
+        margin-top: 15px;
         padding: 20px;
         border-radius: 5px;
         background-color: #fff;
+    }
+
+    .alert {
+        margin: 0 auto;
+        padding: 10px 15px;
+        font-weight: bolder;
+    }
+
+    .alert-warning {
+        background-color: #FDFACB;
+        border: 1px dashed #F6EDA0;
+    }
+
+    .alert-success {
+        background-color: #D2FDC2;
+        border: 1px dashed #ACCF9A;
     }
 </style>

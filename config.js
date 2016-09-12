@@ -1,10 +1,10 @@
 module.exports = {
     window: {
         width: 500,
-        height: 768,
+        height: 500,
         frame: true
     },
-    serverPort: 8084,  // port for browser communication
+    serverPort: 8085,  // port for browser communication
     multicastPort: 6789,
     multicastGroup: '228.5.6.7',
     multicastTTL: 128,
@@ -12,11 +12,11 @@ module.exports = {
     debug: true,
 
     minPlayers: 3, // minimum number of players
-    syncTime: 1000, // maximum time to wait for the first sync
+    syncTime: 2000, // maximum time to wait for the first sync
     waitingPlayersTime: 25000,
     waitingChoiceTime: 8000,
     waitingGuessTime: 15000,
     announcingWinnerTime: 5000,
 
-    maxPlayerFaults: 1
+    maxPlayerFaults: 3 // max timeouts for an peer
 };

@@ -1,42 +1,40 @@
 <template>
     <div id="players">
-        <h3 class="text-center">Players</h3>
-        <ul>
-            <li v-for="player in players">
-                {{ player.nickname || player.id }}
-                <span class="pull-right">{{ player.roundPoints }}</span>
-            </li>
-        </ul>
-        {{ players | json}}
+        <h3 class="text-center">Next players</h3>
+        <table>
+            <thead>
+                <tr>
+                    <td><b>Player</b></td>
+                    <td><b>Round</b></td>
+                    <td><b>Total</b></td>
+                </tr>
+            </thead>
+            <tr v-for="player in players" v-if="player.id != generator.id" v-bind:class="{'green': me.id == player.id}">
+                <td>{{ player.nickname || player.id }}</td>
+                <td>{{ player.roundPoints }}</td>
+                <td>{{ player.totalPoints }}</td>
+            </tr>
+        </table>
     </div>
 </template>
 <style>
-    ul {
-        list-style: none;
-        margin-left: 0;
-        padding-left: 0;
+    .green {
+        background-color: #ACCF9A;
     }
-
-    ul > li {
-        padding: 8px 0;
-        border-bottom: 1px solid #f0f0f0;
+    table {
+        width: 100%;
     }
-
-    .bolder {
+    table > thead > tr > td {
         font-weight: bolder;
     }
-
-    .text-center {
-        text-align: center;
+    table td {
+        padding: 5px 8px;
     }
-
-    .pull-right {
-        float: right;
+    table tr {
+        border-bottom: 1px solid #f0f0f0;
     }
-
-    #players {
-        border-left: 1px dashed #ccc;
-        padding: 0 0 10px 20px;
+    table tr:last-child {
+        border: none;
     }
 </style>
 <script>
@@ -45,6 +43,14 @@
             players: {
                 type: Array,
                 required: true
+            },
+            generator: {
+                type: Object,
+                required: false
+            },
+            me: {
+                type: Object,
+                required: false
             }
         }
     }

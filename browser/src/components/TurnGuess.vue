@@ -1,8 +1,8 @@
 <template>
     <div>
         <form v-on:submit.prevent="sendGuess">
-            <label>Adivinha ou passa a vez?</label>
-            <input type="text" v-model="word">
+            <label>Guess or pass?</label>
+            <input type="text" id="guess" v-model="word">
         </form>
     </div>
 </template>
@@ -19,6 +19,9 @@
                     guess: this.word
                 });
             }
+        },
+        ready: function () {
+            document.getElementById("guess").focus();
         }
     }
 </script>

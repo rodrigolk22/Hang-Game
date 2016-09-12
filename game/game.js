@@ -191,7 +191,7 @@ var addPlayer = function (player) {
     circularList.add(players, {
         id: player.id,
         nickname: player.nickname,
-        gamePoints: 0,
+        totalPoints: 0,
         roundPoints: 0,
         faults: 0
     });
@@ -346,7 +346,7 @@ var startRound = function () {
  * End a game round
  * @param callback executed 10s after announced the winner
  */
-var endRound = function (callback) {
+var endRound = function () {
 
     // remove all available characters
     availableCharacters = [];
