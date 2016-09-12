@@ -256,9 +256,18 @@ var nextPlayer = function () {
     setStatus('WAITING_CHOICE');
 };
 
+/**
+ * Update the currentSupressedWord (mark availableCharacters as '*')
+ */
 var updateSupressedWord = function () {
-    // TODO: change the current supressed word
-    currentSupressedWord = currentWord;
+
+    var word = currentWord;
+    for (var i = 0; i < availableCharacters.length; i++) {
+        var regex = new RegExp(availableCharacters[i], 'g');
+        word = word.replace(regex, '*');
+    }
+
+    currentSupressedWord = word;
 };
 
 /**
@@ -349,8 +358,6 @@ var markCharacterAsNonavailable = function (character) {
     if (index > -1) {
         availableCharacters.splice(index, 1);
     }
-
-    console.log(index, availableCharacters);
 
     // update the supressed word
     updateSupressedWord();

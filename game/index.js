@@ -36,7 +36,7 @@ game.init(function () {
             debug('now, I am an player!');
         }
         alertBrowser();
-    }, 5000);
+    }, config.firstSyncTime);
 });
 
 // peer <-> peer message handlers
