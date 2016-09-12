@@ -1,15 +1,15 @@
 <template>
     <div id="app">
-        <div style="width: 100%; display: table">
-            <div style="width:70%; float: left">
-                <h3 class="text-center">{{ game.status }}</h3>
-                <p>The word is {{ game.currentSupressedWord }}</p><br/>
-                <turn-choice v-if="game.status == 'WAITING_CHOICE'" :available-characters="game.availableCharacters"></turn-choice>
-                <turn-guess v-if="game.status == 'WAITING_GUESS'"></turn-guess>
-            </div>
-            <div style="width: 30%; float: left">
-                <player-list :players="game.players"></player-list>
-            </div>
+        <div class="box text-center">
+            <h3>{{ status }}</h3>
+            <p v-show="word"><b>Word is:<b/> {{ word }}</p>
+            <p v-show="timer"><b>Time:<b/> {{ timer }}</p>
+            <br/>
+            <turn-choice v-if="isWaitingMyChoice" :available-characters="game.availableCharacters"></turn-choice>
+            <turn-guess v-if="isWaitingMyGuess"></turn-guess>
+        </div>
+        <div>
+            <player-list :players="game.players"></player-list>
         </div>
 
         <pre>{{ $data | json }}</pre>
@@ -24,15 +24,51 @@
     export default {
         data: function () {
             return {
+                timer: 0,
                 game: {
-                    status: 'NOT_SYNCED',
                     me: '', // my nickname
+                    currentPlayer: null,
+                    currentGenerator: null,
+                    currentSupressedWord: '',
+                    timer: 0,
+                    status: 'NOT_SYNCED',
                     players: [] // players data (including me)
                 }
             }
         },
         computed: {
-
+            status: function () {
+                var currentPlayer = this.game.currentPlayer;
+                switch (this.game.status) {
+                    case 'NOT_SYNCED':
+                        return 'Syncing with peers...';
+                    case 'WAITING_PLAYERS':
+                        return 'Waiting players to join the game...';
+                    case 'WAITING_CHOICE':
+                        return 'Waiting choice from ' + (currentPlayer.nickname || currentPlayer.id) + '...';
+                    case 'WAITING_GUESS':
+                        return 'Wating gues from ' + (currentPlayer.nickname || currentPlayer.id) + '...';
+                    case 'ANNOUNCING_WINNER':
+                        return (currentPlayer.nickname || currentPlayer.id) + ' has won the game!!!';
+                    default:
+                        return null;
+                }
+            },
+            word: function () {
+                return this.game.currentSupressedWord;
+            },
+            iAmTheCurrentPlayer: function () {
+                if (this.game == null || this.game.currentPlayer == null || this.game.me == null) {
+                    return null;
+                }
+                return this.game.currentPlayer.id == this.game.me.id;
+            },
+            isWaitingMyChoice: function () {
+                return this.iAmTheCurrentPlayer && this.game.status == 'WAITING_CHOICE';
+            },
+            isWaitingMyGuess: function () {
+                return this.iAmTheCurrentPlayer && this.game.status == 'WAITING_GUESS';
+            }
         },
         components: {
             TurnChoice, TurnGuess,
@@ -40,6 +76,17 @@
         },
         created: function () {
             var self = this;
+
+            // countdown
+            setInterval(function() {
+                var now = (new Date().getTime());
+                var lastingTimeMillis = self.game.timer - now;
+                if (lastingTimeMillis > 0) {
+                    self.timer = Math.round(lastingTimeMillis / 1000);
+                } else {
+                    self.timer = 0;
+                }
+            }, 1000);
 
             // handler for game updates
             this.$socket.on('gameUpdated', function (game) {
@@ -56,10 +103,17 @@
     }
 
     #app {
+        margin: 30px auto;
+        max-width: 900px;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .box {
         padding: 20px;
         border-radius: 5px;
-        margin: 30px auto;
-        max-width: 700px;
         background-color: #fff;
     }
 </style>

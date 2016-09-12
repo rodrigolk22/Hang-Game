@@ -4,7 +4,7 @@ module.exports = {
         height: 768,
         frame: true
     },
-    serverPort: 8082,  // port for browser communication
+    serverPort: 8081,  // port for browser communication
     multicastPort: 6789,
     multicastGroup: '228.5.6.7',
     multicastTTL: 128,
@@ -12,5 +12,5 @@ module.exports = {
     debug: true,
 
     minPlayers: 2, // minimum number of players
-    firstSyncTime: 5000, // maximum time to wait for the first sync
+    firstSyncTime: 1000, // maximum time to wait for the first sync
 };

@@ -136,6 +136,15 @@ var getCurrentPlayer = function () {
     return circularList.first(players) || null;
 };
 
+var getCurrentGenerator = function () {
+    for (var i = 0; i < players.length; i++) {
+        if (players[i].id == getCurrentGeneratorId()) {
+            return players[i];
+        }
+    }
+    return null;
+};
+
 var hasGenerator = function () {
     return getCurrentGeneratorId() !== -1;
 };
@@ -196,8 +205,15 @@ var getPlayer = function (id) {
  */
 var getGameData = function () {
     return {
+        me: {
+            id: myID,
+            nickname: myNickname
+        },
         timer: timer,
-        currentSupressedWord: currentSupressedWord, // TODO: enviar aos peers a palavra suprimindo as letras já usadas
+        currentPlayer: getCurrentPlayer(),
+        currentGenerator: getCurrentGenerator(),
+
+        currentSupressedWord: currentSupressedWord,
         availableCharacters: availableCharacters,
         status: status,
         players: players,
@@ -211,7 +227,7 @@ var getGameData = function () {
  */
 var setGameData = function (gameData) {
     timer = gameData.timer;
-    currentSupressedWord = gameData.currentSupressedWord; // TODO: enviar aos peers a palavra suprimindo as letras já usadas
+    currentSupressedWord = gameData.currentSupressedWord;
     availableCharacters = gameData.availableCharacters;
     status = gameData.status;
     players = gameData.players;
@@ -304,6 +320,7 @@ var endRound = function (callback) {
 
     // remove all available characters
     availableCharacters = [];
+    updateSupressedWord();
 
     // sum players total points
     _.each(players, function (player) {
