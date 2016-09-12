@@ -1,8 +1,11 @@
 var _ = require('underscore'),
+    EventEmmiter = require('events'),
     config = require('./../config'),
     alphabet = require('./helpers/alphabet'),
     generator = require('./helpers/generator'),
     circularList = require('./helpers/circularList');
+
+var events = new EventEmmiter();
 
 /**
  * Status of the game (see 'statuses' for the possible values)
@@ -167,17 +170,17 @@ var hasPlayerWithId = function (id) {
  * Add a new player (with zero points and empty nickname) to the game
  * @param id
  */
-var addPlayer = function (id) {
+var addPlayer = function (player) {
 
-    if (hasPlayerWithId(id)) {
-        throw ('another player with id ' + id + ' already joined the game');
+    if (hasPlayerWithId(player.id)) {
+        throw ('another player with id ' + player.id + ' already joined the game');
     }
 
-    circularList.add(generators, id);
+    circularList.add(generators, player.id);
 
     circularList.add(players, {
-        id: id,
-        nickname: '',
+        id: player.id,
+        nickname: player.nickname,
         gamePoints: 0,
         roundPoints: 0
     });
@@ -308,8 +311,7 @@ var startRound = function () {
     updateSupressedWord();
 
     // change the status to waiting choice
-    setTimer(10000);
-    setStatus('WAITING_CHOICE');
+    startWaitingChoice();
 };
 
 /**
@@ -328,13 +330,7 @@ var endRound = function (callback) {
     });
 
     // change the status to announcing winner
-    setStatus('ANNOUNCING_WINNER');
-
-    // change the generator after 10s
-    setTimeout(function () {
-        nextGenerator();
-        callback();
-    }, 10000);
+    startAnnouncingWinner();
 };
 
 /**
@@ -342,7 +338,13 @@ var endRound = function (callback) {
  */
 var startWaitingChoice = function () {
     setStatus('WAITING_CHOICE');
-    setTimer(10000);
+    setTimer(config.waitingChoiceTime);
+
+    setTimeout(function () {
+        if (statusIs('WAITING_CHOICE')) {
+            events.emit('waitingChoiceTimeout');
+        }
+    }, config.waitingChoiceTime);
 };
 
 /**
@@ -350,7 +352,13 @@ var startWaitingChoice = function () {
  */
 var startWaitingGuess = function () {
     setStatus('WAITING_GUESS');
-    setTimer(10000);
+    setTimer(config.waitingGuessTime);
+
+    setTimeout(function () {
+        if (statusIs('WAITING_GUESS')) {
+            events.emit('waitingGuessTimeout');
+        }
+    }, config.waitingGuessTime);
 };
 
 /**
@@ -358,7 +366,24 @@ var startWaitingGuess = function () {
  */
 var startWaitingPlayers = function () {
     setStatus('WAITING_PLAYERS');
-    setTimer(10000);
+    setTimer(config.waitingPlayersTime);
+
+    setTimeout(function () {
+        if (statusIs('WAITING_PLAYERS')) {
+            events.emit('waitingPlayersTimeout');
+        }
+    }, config.waitingPlayersTime);
+};
+
+var startAnnouncingWinner = function () {
+    setStatus('ANNOUNCING_WINNER');
+    setTimer(config.announcingWinnerTime);
+
+    setTimeout(function () {
+        if (statusIs('ANNOUNCING_WINNER')) {
+            events.emit('announcingWinnerTimeout');
+        }
+    }, config.announcingWinnerTime);
 };
 
 /**
@@ -413,13 +438,15 @@ var init = function (successCallback) {
 };
 
 module.exports = {
+    events: events,
+
     canStart: canStart,
 
     init: init,
     startRound: startRound,
     endRound: endRound,
-    nextPlayer: nextPlayer,
     nextGenerator: nextGenerator,
+    nextPlayer: nextPlayer,
 
     markCharacterAsNonavailable: markCharacterAsNonavailable,
     countCharactersInCurrentWord: countCharactersInCurrentWord,

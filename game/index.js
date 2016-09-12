@@ -4,39 +4,79 @@ var config = require('./../config'),
     multicast = require('./multicast'), // multicast socket for the peer
     browser = require('socket.io')(config.serverPort); // socket for the browser client
 
+game.events.on('waitingPlayersTimeout', function () {
+
+    // start the game if is not started yet
+    if (game.canStart()) {
+        game.startRound();
+    } else {
+        game.startWaitingPlayers();
+    }
+
+    alertBrowser();
+    alertPeers();
+});
+
+/**
+ * When the current player haven't sent a choice
+ */
+game.events.on('waitingChoiceTimeout', function () {
+    var player = game.getCurrentPlayer();
+
+    console.log(player, 'hasnt sent a choice');
+    // TODO do the things here
+
+    game.startWaitingChoice();
+    alertBrowser();
+    alertPeers();
+});
+
+/**
+ * When the current player haven't sent a guess
+ */
+game.events.on('waitingGuessTimeout', function () {
+    var player = game.getCurrentPlayer();
+
+    console.log(player, 'hasnt sent a guess');
+    // TODO do the things here
+
+    game.startWaitingGuess();
+    alertBrowser();
+    alertPeers();
+});
+
+/**
+ * When the winner has been announced, then change the generator and
+ * send a nextGenerator message in order to the next generator woke up;
+ */
+game.events.on('announcingWinnerTimeout', function () {
+    game.nextGenerator();
+    multicast.emit('nextGenerator', game.getGameData());
+});
+
 // do initial game sync
 game.init(function () {
 
-    var myID = game.getMyId();
+    var player = {
+        id: game.getMyId(),
+        nickname: 'ranbo ' + Math.random()
+    };
 
     // request to join the game
-    multicast.emit('joinTheGame', {
-        id: myID
-    });
+    multicast.emit('joinTheGame', player);
 
-    debug('requested to join the game with ID ' + myID);
-    debug('waiting 5s...');
-
-    // wait for 5s to sync with the peers
+    // wait for syncTime to sync with the peers
     setTimeout(function () {
-
         if (game.statusIs('NOT_SYNCED')) {
-
-            /**
-             * I am the first player, then I need to
-             * become the generator
-             */
-            game.addPlayer(myID);
-            debug('now, I am the generator!');
-
+            game.addPlayer(player);
             game.startWaitingPlayers();
-
             alertPeers();
+            debug('now, I am the generator!');
         } else {
             debug('now, I am an player!');
         }
         alertBrowser();
-    }, config.firstSyncTime);
+    }, config.syncTime);
 });
 
 // peer <-> peer message handlers
@@ -66,13 +106,7 @@ multicast.socket.on('listening', function () {
     // when someone has joined the game
     multicast.socket.on('joinTheGame', function (data) {
         if (game.iAmTheGenerator()) {
-            game.addPlayer(data.id);
-
-            // start the game if is not started yet
-            if (game.statusIs('WAITING_PLAYERS') && game.canStart()) {
-                game.startRound();
-            }
-
+            game.addPlayer(data);
             alertPeers();
             alertBrowser();
         }
@@ -117,10 +151,7 @@ multicast.socket.on('listening', function () {
 
                 // guessed the correct word, add +5 points to the player and end the round
                 player.roundPoints += 5;
-
-                game.endRound(function () {
-                    multicast.emit('nextGenerator', game.getGameData());
-                });
+                game.endRound();
 
             } else {
                 // guessed the wrong word
