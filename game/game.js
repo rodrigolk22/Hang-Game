@@ -6,7 +6,13 @@ var _ = require('underscore'),
  * Status of the game (see 'statuses' for the possible values)
  * @type {boolean}
  */
-var status = 'NOT_SYNCED';
+var status = 'NOT_SYNCED'; // first status needs to be NOT_SYNCED
+
+/**
+ * An timer to set timeouts in order to handle peer failures
+ * @type {null}
+ */
+var timer = null;
 
 /**
  * My peer ID
@@ -22,26 +28,42 @@ var myNickname = '';
 
 /**
  * Game Players
+ * List of player objects
  * @type {Array}
  */
 var players = [];
 
 /**
  * Game generators
+ * List of players ID that will be the next generators
  * @type {Array}
  */
 var generators = [];
 
+/**
+ * Possible game statuses
+ * @type {string[]}
+ */
 var statuses = [
     'NOT_SYNCED', // when the node dont know the game data
-    'WAITING_PLAYERS', // when the game not start because has not enought players
+    'WAITING_PLAYERS', // when the game doesn't started because has not enought players
+    'WAITING_CHOICE', // waiting a choice
     'WAITING_GUESS', // waiting a guess
+    'ANOUNCING_WINNER', // announcing a winner
     // ...
 ];
 
+/**
+ * The current generated word that need to be guessed
+ * @type {null}
+ */
 var currentWord = null;
 
-var usedCharacters = [];
+/**
+ * Current available characters for player choices
+ * @type {Array}
+ */
+var availableCharacters = [];
 
 /**
  * Change the game status
@@ -86,6 +108,13 @@ var iAmTheGenerator = function () {
  */
 var iAmAnPlayer = function () {
     return currentGeneratorId() != myID && myID !== -1;
+};
+
+/**
+ * Get the current player data
+ */
+var getCurrentPlayer = function () {
+    return _.first(players) || null;
 };
 
 /**
@@ -176,18 +205,71 @@ var canStart = function () {
     return players.length >= 3 && hasGenerator();
 };
 
+/**
+ * Start a game round
+ */
 var startRound = function () {
 
-    // TODO: get the first player
-
-    //
-
-    // TODO: concatenar pontos da rodada anterior
-    // TODO: zerar pontos da rodada anterior
-
+    // seting player round points to zero
+    _.each(players, function (player) {
+        player.roundPoints = 0;
+    });
 
     // generate a new word
     currentWord = generator.generate();
+
+    // restart the available characters
+    availableCharacters = alphabet;
+};
+
+/**
+ * Get and set the next generator
+ */
+var changeGenerator = function () {
+    // get the first generator
+    // put the first generator on final of the array
+};
+
+/**
+ * Get and set the next player
+ */
+var changePlayer = function () {
+    // get the next player
+    // if isn't the generator
+        // set next player
+    // else
+        // nextPlayer();
+};
+
+/**
+ * End a game round
+ */
+var endRound = function () {
+
+    // sum players total points
+    _.each(players, function (player) {
+        player.roundPoints = 0;
+    });
+
+    // change the generator process
+
+    // change the player
+
+    // get the last player
+    var firstPlayer = _.first(players);
+
+    //
+
+
+    // TODO:
+
+};
+
+/**
+ * Return true if guess is equals the current word
+ */
+var isCorrectGuess = function (guess) {
+    return (guess === currentWord)
 };
 
 /**
@@ -204,13 +286,19 @@ var init = function (successCallback) {
 };
 
 module.exports = {
+    canStart: canStart,
+
     init: init,
+    startRound: startRound,
+    endRound: endRound,
+    changePlayer: changePlayer,
+    changeGenerator: changeGenerator,
+
+    getCurrentPlayer: getCurrentPlayer,
+    isCorrectGuess: isCorrectGuess,
 
     statusIs: statusIs,
     setStatus: setStatus,
-
-    canStart: canStart,
-    startRound: startRound,
 
     iAmTheGenerator: iAmTheGenerator,
     iAmAnPlayer: iAmAnPlayer,
