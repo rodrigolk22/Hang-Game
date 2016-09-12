@@ -214,6 +214,8 @@ var removePlayer = function (playerId) {
         }
     }
 
+    events.emit('playerRemoved');
+
     return true;
 };
 

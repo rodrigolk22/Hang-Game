@@ -30,13 +30,12 @@ game.events.on('waitingChoiceTimeout', function () {
 
     // if the player hasn't responded for more than maxPlayerFaults
     if (player.faults > config.maxPlayerFaults) {
-        game.nextPlayer();
         game.removePlayer(player.id);
         debug(player.nickname + "hasn't respondend for " + config.maxPlayerFaults + ' turns,' +
             ' and was droped from the game');
+    } else {
+        game.startWaitingChoice();
     }
-
-    game.startWaitingChoice();
 
     alertBrowser();
     alertPeers();
@@ -52,7 +51,10 @@ game.events.on('waitingGuessTimeout', function () {
 
     // if the player hasn't responded for more than maxPlayerFaults
     if (player.faults > config.maxPlayerFaults) {
+
         game.nextPlayer();
+        game.startWaitingGuess();
+
         game.removePlayer(player.id);
         debug(player.nickname + "hasn't respondend for " + config.maxPlayerFaults + ' turns,' +
             ' and was droped from the game');
@@ -73,12 +75,24 @@ game.events.on('announcingWinnerTimeout', function () {
     multicast.emit('nextGenerator', game.getGameData());
 });
 
+/**
+ * When an player is removed, then verify if the game
+ * can continue or wait for more players
+ */
+game.events.on('playerRemoved', function () {
+    if (!game.canStart()) {
+        game.startWaitingPlayers();
+    }
+    alertBrowser();
+    alertPeers();
+});
+
 // do initial game sync
 game.init(function () {
 
     var player = {
         id: game.getMyId(),
-        nickname: 'ranbo ' + Math.random()
+        nickname: 'ranbo ' + Math.random() // TODO: remove this hardcoded thing
     };
 
     // request to join the game
@@ -94,6 +108,7 @@ game.init(function () {
         } else {
             debug('now, I am an player!');
         }
+
         alertBrowser();
     }, config.syncTime);
 });

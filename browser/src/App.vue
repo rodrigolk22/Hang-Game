@@ -11,6 +11,7 @@
         <div>
             <player-list :players="game.players"></player-list>
         </div>
+        <div>{{  }}</div>
 
         <pre>{{ $data | json }}</pre>
     </div>
@@ -26,7 +27,7 @@
             return {
                 timer: 0,
                 game: {
-                    me: '', // my nickname
+                    me: null,
                     currentPlayer: null,
                     currentGenerator: null,
                     currentSupressedWord: '',
@@ -86,7 +87,7 @@
                 } else {
                     self.timer = 0;
                 }
-            }, 1000);
+            }, 200);
 
             // handler for game updates
             this.$socket.on('gameUpdated', function (game) {

@@ -1,6 +1,6 @@
 module.exports = {
     window: {
-        width: 1024,
+        width: 500,
         height: 768,
         frame: true
     },
@@ -11,12 +11,12 @@ module.exports = {
     multicastLoopback: true, // return messages to sender interface
     debug: true,
 
-    minPlayers: 4, // minimum number of players
+    minPlayers: 3, // minimum number of players
     syncTime: 1000, // maximum time to wait for the first sync
     waitingPlayersTime: 25000,
     waitingChoiceTime: 8000,
     waitingGuessTime: 15000,
     announcingWinnerTime: 5000,
 
-    maxPlayerFaults: 3
+    maxPlayerFaults: 1
 };
