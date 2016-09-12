@@ -122,8 +122,6 @@ multicast.socket.on('listening', function () {
                     multicast.emit('nextGenerator', game.getGameData());
                 });
 
-                return;
-
             } else {
                 // guessed the wrong word
                 player.roundPoints -= 1;

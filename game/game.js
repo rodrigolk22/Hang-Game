@@ -302,6 +302,9 @@ var startRound = function () {
  */
 var endRound = function (callback) {
 
+    // remove all available characters
+    availableCharacters = [];
+
     // sum players total points
     _.each(players, function (player) {
         player.totalPoints += player.roundPoints;
@@ -312,7 +315,7 @@ var endRound = function (callback) {
 
     // change the generator after 10s
     setTimeout(function () {
-        game.nextGenerator();
+        nextGenerator();
         callback();
     }, 10000);
 };
