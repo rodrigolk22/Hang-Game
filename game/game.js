@@ -1,6 +1,7 @@
 var _ = require('underscore'),
     alphabet = require('./helpers/alphabet'),
-    generator = require('./helpers/generator');
+    generator = require('./helpers/generator'),
+    circularList = require('./helpers/circularList');
 
 /**
  * Status of the game (see 'statuses' for the possible values)
@@ -49,15 +50,24 @@ var statuses = [
     'WAITING_PLAYERS', // when the game doesn't started because has not enought players
     'WAITING_CHOICE', // waiting a choice
     'WAITING_GUESS', // waiting a guess
-    'ANOUNCING_WINNER', // announcing a winner
+    'ANNOUNCING_WINNER', // announcing a winner
     // ...
 ];
 
 /**
  * The current generated word that need to be guessed
+ * Only the generator can see this word
  * @type {null}
  */
 var currentWord = null;
+
+/**
+ * The current generate word, but with available characters supressed,
+ * for example ANAB*LL*, if E is already choosen.
+ * All the peers can see this word.
+ * @type {null}
+ */
+var currentSupressedWord = null;
 
 /**
  * Current available characters for player choices
@@ -86,12 +96,20 @@ var statusIs = function (statusIs) {
 };
 
 /**
+ * Set the timer to the future (now() + milis)
+ * @param milis milisseconds to add to now()
+ */
+var setTimer = function (milis) {
+    timer = (new Date()).getTime() + milis;
+};
+
+/**
  * Get the gurrent generator ID
  * return null if there is no generator yet
  * @returns {*|null}
  */
-var currentGeneratorId = function () {
-    return _.first(generators) || null;
+var getCurrentGeneratorId = function () {
+    return circularList.first(generators) || null;
 };
 
 /**
@@ -99,7 +117,7 @@ var currentGeneratorId = function () {
  * @returns {boolean}
  */
 var iAmTheGenerator = function () {
-    return currentGeneratorId() == myID && myID !== -1;
+    return getCurrentGeneratorId() == myID && myID !== -1;
 };
 
 /**
@@ -107,14 +125,18 @@ var iAmTheGenerator = function () {
  * @returns {boolean}
  */
 var iAmAnPlayer = function () {
-    return currentGeneratorId() != myID && myID !== -1;
+    return getCurrentGeneratorId() != myID && myID !== -1;
 };
 
 /**
  * Get the current player data
  */
 var getCurrentPlayer = function () {
-    return _.first(players) || null;
+    return circularList.first(players) || null;
+};
+
+var hasGenerator = function () {
+    return getCurrentGeneratorId() !== -1;
 };
 
 /**
@@ -141,9 +163,9 @@ var addPlayer = function (id) {
         throw ('another player with id ' + id + ' already joined the game');
     }
 
-    generators.push(id);
+    circularList.add(generators, id);
 
-    players.push({
+    circularList.add(players, {
         id: id,
         nickname: '',
         gamePoints: 0,
@@ -169,10 +191,13 @@ var getPlayer = function (id) {
 
 /**
  * Get the game data to send to the peers
- * @returns {{players: Array}}
+ * @returns {{timer: null, currentSupressedWord, availableCharacters: Array, status: boolean, players: Array, generators: Array}}
  */
 var getGameData = function () {
     return {
+        timer: timer,
+        currentSupressedWord: currentSupressedWord, // TODO: enviar aos peers a palavra suprimindo as letras já usadas
+        availableCharacters: availableCharacters,
         status: status,
         players: players,
         generators: generators
@@ -184,6 +209,9 @@ var getGameData = function () {
  * @param gameData
  */
 var setGameData = function (gameData) {
+    timer = gameData.timer;
+    currentSupressedWord = gameData.currentSupressedWord; // TODO: enviar aos peers a palavra suprimindo as letras já usadas
+    availableCharacters = gameData.availableCharacters;
     status = gameData.status;
     players = gameData.players;
     generators = gameData.generators;
@@ -206,39 +234,56 @@ var canStart = function () {
 };
 
 /**
- * Start a game round
- */
-var startRound = function () {
-
-    // seting player round points to zero
-    _.each(players, function (player) {
-        player.roundPoints = 0;
-    });
-
-    // generate a new word
-    currentWord = generator.generate();
-
-    // restart the available characters
-    availableCharacters = alphabet;
-};
-
-/**
  * Get and set the next generator
  */
 var changeGenerator = function () {
-    // get the first generator
-    // put the first generator on final of the array
+    circularList.next(generators);
 };
 
 /**
  * Get and set the next player
  */
 var changePlayer = function () {
-    // get the next player
-    // if isn't the generator
-        // set next player
-    // else
-        // nextPlayer();
+    circularList.next(players);
+
+    // the next player cant be the generator
+    if (getCurrentPlayer().id == getCurrentGeneratorId()) {
+        changePlayer(); // recursive
+    }
+
+    setTimer(10000);
+    setStatus('WAITING_CHOICE');
+};
+
+var updateSupressedWord = function () {
+    // TODO: change the current supressed word
+    currentSupressedWord = currentWord;
+};
+
+/**
+ * Start a game round
+ */
+var startRound = function () {
+
+    // seting players round points to zero
+    _.each(players, function (player) {
+        player.roundPoints = 0;
+    });
+
+    // set the next player
+    changePlayer();
+
+    // generate a new word, and update the supressed word
+    currentWord = generator.generate();
+
+    // restart the available characters
+    availableCharacters = alphabet;
+
+    updateSupressedWord();
+
+    // change the status to waiting choice
+    setTimer(10000);
+    setStatus('WAITING_CHOICE');
 };
 
 /**
@@ -248,21 +293,35 @@ var endRound = function () {
 
     // sum players total points
     _.each(players, function (player) {
-        player.roundPoints = 0;
+        player.totalPoints += player.roundPoints;
     });
 
-    // change the generator process
+    // change the status to announcing winner
+    setStatus('ANNOUNCING_WINNER');
+};
 
-    // change the player
+/**
+ * Start a choice turn
+ */
+var startWaitingChoice = function () {
+    setStatus('WAITING_CHOICE');
+    setTimer(10000);
+};
 
-    // get the last player
-    var firstPlayer = _.first(players);
+/**
+ * Start a guess turn
+ */
+var startWaitingGuess = function () {
+    setStatus('WAITING_GUESS');
+    setTimer(10000);
+};
 
-    //
-
-
-    // TODO:
-
+/**
+ * Start waiting players
+ */
+var startWaitingPlayers = function () {
+    setStatus('WAITING_PLAYERS');
+    setTimer(10000);
 };
 
 /**
@@ -270,6 +329,37 @@ var endRound = function () {
  */
 var isCorrectGuess = function (guess) {
     return (guess === currentWord)
+};
+
+/**
+ * Mark the character as nonavailable for the next choices
+ */
+var markCharacterAsNonavailable = function (character) {
+
+    // remove the character from availableCharacters array
+    var index = availableCharacters.indexOf(character);
+    if (index > -1) {
+        availableCharacters.slice(index, 1);
+    }
+
+    // update the supressed word
+    updateSupressedWord();
+};
+
+/**
+ * Return the amount of character in the current word
+ * For example, if the word id POTATOES and character is T,
+ * then return 2. If the word is ANABELLE and character is Z,
+ * then return 0.
+ */
+var countCharactersInCurrentWord = function (character) {
+    var count = 0;
+    for (var i = 0; i < currentWord.length; i++) {
+        if (currentWord[i] == character) {
+            count ++;
+        }
+    }
+    return count;
 };
 
 /**
@@ -294,6 +384,9 @@ module.exports = {
     changePlayer: changePlayer,
     changeGenerator: changeGenerator,
 
+    markCharacterAsNonavailable: markCharacterAsNonavailable,
+    countCharactersInCurrentWord: countCharactersInCurrentWord,
+
     getCurrentPlayer: getCurrentPlayer,
     isCorrectGuess: isCorrectGuess,
 
@@ -307,7 +400,11 @@ module.exports = {
     setGameData: setGameData,
 
     addPlayer: addPlayer,
-    getPlayer: getPlayer,
 
-    getMyId: getMyId
+    getMyId: getMyId,
+
+    // status changes
+    startWaitingPlayers: startWaitingPlayers,
+    startWaitingChoice: startWaitingChoice,
+    startWaitingGuess: startWaitingGuess
 };

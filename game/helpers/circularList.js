@@ -48,10 +48,9 @@ var remove = function (array, obj) {
 /**
  * Set the next element of the array (first will be last and second will be first)
  * @param array
- * @param obj
  */
-var next = function (array, obj) {
-    var first = first(array);
+var next = function (array) {
+    var first = _.first(array) || null;
     var firstClone = _.clone(first);
     remove(array, first);
     array.push(firstClone);

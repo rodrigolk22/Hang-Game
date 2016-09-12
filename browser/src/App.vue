@@ -11,6 +11,8 @@
                 <player-list :players="game.players" :me="game.me"></player-list>
             </div>
         </div>
+
+        <pre>{{ $data | json }}</pre>
     </div>
 </template>
 

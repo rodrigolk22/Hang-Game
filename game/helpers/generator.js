@@ -24,7 +24,9 @@ function getRandomIntInclusive(min, max) {
  * @returns {string}
  */
 var generate = function () {
-    return words[getRandomIntInclusive(0, words.length - 1)];
+    var max = words.length - 1;
+    var index = getRandomIntInclusive(0, max);
+    return words[index];
 };
 
 module.exports = {
