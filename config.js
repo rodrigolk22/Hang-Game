@@ -1,10 +1,10 @@
 module.exports = {
     window: {
         width: 500,
-        height: 500,
+        height: 600,
         frame: true
     },
-    serverPort: 8085,  // port for browser communication
+    serverPort: 8084,  // port for browser communication
     multicastPort: 6789,
     multicastGroup: '228.5.6.7',
     multicastTTL: 128,

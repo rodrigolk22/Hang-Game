@@ -2,9 +2,14 @@
     <div id="app">
         <div class="box text-center">
             <h3>{{ status }}</h3>
-            <p v-show="word"><b>Word is:<b/> {{ word }}</p>
-            <p v-show="timer"><b>Time:<b/> {{ timer }}</p>
-            <br/>
+
+            <table class="text-center">
+                <tr>
+                    <td><p v-show="word"><b>Word is:<b/> {{ word }}</p></td>
+                    <td><p v-show="timer"><b>Time:<b/> {{ timer }}</p></td>
+                </tr>
+            </table>
+
             <turn-choice v-if="isWaitingMyChoice" :available-characters="game.availableCharacters"></turn-choice>
             <turn-guess v-if="isWaitingMyGuess"></turn-guess>
 
