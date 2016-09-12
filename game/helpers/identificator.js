@@ -1,4 +1,4 @@
-var machineId = require('ee-machine-id');
+var uid = require('uid');
 
 /**
  * Generate an unique ID for the machine running the NodeJS process.
@@ -7,8 +7,6 @@ var machineId = require('ee-machine-id');
  * @param callback
  */
 module.exports = function (callback) {
-    machineId.get(function (id) {
-        var UID = id + process.pid;
-        callback(UID);
-    });
+    var UID = uid(5) + process.pid;
+    callback(UID);
 };
