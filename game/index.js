@@ -106,7 +106,7 @@ multicast.socket.on('listening', function () {
             // TODO: verify if the user that has guessed is the correct user
 
             var player = game.getCurrentPlayer();
-            var guess = data.word;
+            var guess = data.guess;
 
             if (guess == null) {
                 // pass the turn

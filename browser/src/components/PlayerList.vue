@@ -2,11 +2,12 @@
     <div id="players">
         <h3 class="text-center">Players</h3>
         <ul>
-            <li v-for="player in players" v-bind:class="{'bolder': (player.nickname == me)}">
-                {{ $index }} > {{ player.nickname || '' }}
-                <span class="pull-right">{{ player.points || 0 }}</span>
+            <li v-for="player in players">
+                {{ player.nickname || player.id }}
+                <span class="pull-right">{{ player.roundPoints }}</span>
             </li>
         </ul>
+        {{ players | json}}
     </div>
 </template>
 <style>
@@ -35,16 +36,12 @@
 
     #players {
         border-left: 1px dashed #ccc;
-        padding: 10px 0 10px 20px;
+        padding: 0 0 10px 20px;
     }
 </style>
 <script>
     export default {
         props: {
-            me: {
-                type: Object,
-                required: true
-            },
             players: {
                 type: Array,
                 required: true

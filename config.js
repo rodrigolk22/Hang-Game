@@ -5,7 +5,7 @@ module.exports = {
         frame: true
     },
 
-    serverPort: 8083,  // port for browser communication
+    serverPort: 8081,  // port for browser communication
     multicastPort: 6789,
     multicastGroup: '228.5.6.7',
     multicastTTL: 128,
