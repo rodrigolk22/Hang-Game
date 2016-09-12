@@ -6,6 +6,7 @@ var _ = require('underscore'),
     circularList = require('./helpers/circularList');
 
 var events = new EventEmmiter();
+var timeout = null;
 
 /**
  * Status of the game (see 'statuses' for the possible values)
@@ -102,9 +103,18 @@ var statusIs = function (statusIs) {
 /**
  * Set the timer to the future (now() + milis)
  * @param milis milisseconds to add to now()
+ * @param callback to be executed on timeout
  */
-var setTimer = function (milis) {
+var setTimer = function (milis, callback) {
+
+    // set the timer to the future time
     timer = (new Date()).getTime() + milis;
+
+    // clear the last timeout
+    clearTimeout(timeout);
+
+    // set the new timeout
+    timeout = setTimeout(callback, milis);
 };
 
 /**
@@ -182,8 +192,27 @@ var addPlayer = function (player) {
         id: player.id,
         nickname: player.nickname,
         gamePoints: 0,
-        roundPoints: 0
+        roundPoints: 0,
+        faults: 0
     });
+
+    return true;
+};
+
+var removePlayer = function (playerId) {
+
+    // remove from generators list
+    var index = generators.indexOf(playerId);
+    if (index > -1) {
+        generators.splice(index, 1);
+    }
+
+    // remove from players list
+    for (var i = 0; i < players.length; i++) {
+        if (players[i].id == playerId) {
+            players.splice(i, 1);
+        }
+    }
 
     return true;
 };
@@ -268,11 +297,8 @@ var nextPlayer = function () {
 
     // the next player cant be the generator
     if (getCurrentPlayer().id == getCurrentGeneratorId()) {
-        nextPlayer(); // recursive
+        circularList.next(players);
     }
-
-    setTimer(10000);
-    setStatus('WAITING_CHOICE');
 };
 
 /**
@@ -338,13 +364,11 @@ var endRound = function (callback) {
  */
 var startWaitingChoice = function () {
     setStatus('WAITING_CHOICE');
-    setTimer(config.waitingChoiceTime);
-
-    setTimeout(function () {
+    setTimer(config.waitingChoiceTime, function () {
         if (statusIs('WAITING_CHOICE')) {
             events.emit('waitingChoiceTimeout');
         }
-    }, config.waitingChoiceTime);
+    });
 };
 
 /**
@@ -352,13 +376,11 @@ var startWaitingChoice = function () {
  */
 var startWaitingGuess = function () {
     setStatus('WAITING_GUESS');
-    setTimer(config.waitingGuessTime);
-
-    setTimeout(function () {
+    setTimer(config.waitingGuessTime, function () {
         if (statusIs('WAITING_GUESS')) {
             events.emit('waitingGuessTimeout');
         }
-    }, config.waitingGuessTime);
+    });
 };
 
 /**
@@ -366,24 +388,20 @@ var startWaitingGuess = function () {
  */
 var startWaitingPlayers = function () {
     setStatus('WAITING_PLAYERS');
-    setTimer(config.waitingPlayersTime);
-
-    setTimeout(function () {
+    setTimer(config.waitingPlayersTime, function () {
         if (statusIs('WAITING_PLAYERS')) {
             events.emit('waitingPlayersTimeout');
         }
-    }, config.waitingPlayersTime);
+    });
 };
 
 var startAnnouncingWinner = function () {
     setStatus('ANNOUNCING_WINNER');
-    setTimer(config.announcingWinnerTime);
-
-    setTimeout(function () {
+    setTimer(config.announcingWinnerTime, function () {
         if (statusIs('ANNOUNCING_WINNER')) {
             events.emit('announcingWinnerTimeout');
         }
-    }, config.announcingWinnerTime);
+    });
 };
 
 /**
@@ -463,6 +481,7 @@ module.exports = {
     setGameData: setGameData,
 
     addPlayer: addPlayer,
+    removePlayer: removePlayer,
 
     getMyId: getMyId,
 

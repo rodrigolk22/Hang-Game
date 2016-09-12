@@ -4,6 +4,9 @@ var config = require('./../config'),
     multicast = require('./multicast'), // multicast socket for the peer
     browser = require('socket.io')(config.serverPort); // socket for the browser client
 
+/**
+ * When there is no enought players until timeout
+ */
 game.events.on('waitingPlayersTimeout', function () {
 
     // start the game if is not started yet
@@ -18,29 +21,45 @@ game.events.on('waitingPlayersTimeout', function () {
 });
 
 /**
- * When the current player haven't sent a choice
+ * When the current player haven't sent a choice until timeout
  */
 game.events.on('waitingChoiceTimeout', function () {
     var player = game.getCurrentPlayer();
 
-    console.log(player, 'hasnt sent a choice');
-    // TODO do the things here
+    player.faults ++;
+
+    // if the player hasn't responded for more than maxPlayerFaults
+    if (player.faults > config.maxPlayerFaults) {
+        game.nextPlayer();
+        game.removePlayer(player.id);
+        debug(player.nickname + "hasn't respondend for " + config.maxPlayerFaults + ' turns,' +
+            ' and was droped from the game');
+    }
 
     game.startWaitingChoice();
+
     alertBrowser();
     alertPeers();
 });
 
 /**
- * When the current player haven't sent a guess
+ * When the current player haven't sent a guess until timeout
  */
 game.events.on('waitingGuessTimeout', function () {
     var player = game.getCurrentPlayer();
 
-    console.log(player, 'hasnt sent a guess');
-    // TODO do the things here
+    player.faults ++;
 
-    game.startWaitingGuess();
+    // if the player hasn't responded for more than maxPlayerFaults
+    if (player.faults > config.maxPlayerFaults) {
+        game.nextPlayer();
+        game.removePlayer(player.id);
+        debug(player.nickname + "hasn't respondend for " + config.maxPlayerFaults + ' turns,' +
+            ' and was droped from the game');
+    } else {
+        game.startWaitingGuess();
+    }
+
     alertBrowser();
     alertPeers();
 });
@@ -123,7 +142,7 @@ multicast.socket.on('listening', function () {
 
             game.markCharacterAsNonavailable(char);
 
-            // for every character, the player receive +1 point
+            // for every character, the player receive +1 point per character
             player.roundPoints += game.countCharactersInCurrentWord(char);
 
             game.startWaitingGuess();
@@ -154,7 +173,7 @@ multicast.socket.on('listening', function () {
                 game.endRound();
 
             } else {
-                // guessed the wrong word
+                // guessed the wrong word, remove 1 point
                 player.roundPoints -= 1;
                 game.nextPlayer();
                 game.startWaitingChoice();
