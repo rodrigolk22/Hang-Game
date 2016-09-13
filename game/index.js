@@ -231,4 +231,9 @@ module.exports = function (nickname) {
         alertPeers();
         alertBrowser();
     });
+
+    // update the browser whatever has hapened
+    setTimeout(function () {
+        alertBrowser();
+    }, config.waitingSyncTime);
 };

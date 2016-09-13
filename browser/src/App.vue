@@ -23,6 +23,11 @@
             <div v-if="iAmTheGenerator" class="alert alert-warning">
                 I Am the Generator!!!
             </div>
+
+            <!-- dropped from the game -->
+            <div v-if="iAmDropped" class="alert alert-danger">
+                I was dropped from the game :(
+            </div>
         </div>
 
         <div class="box" v-if="game.players.length > 1">
@@ -90,6 +95,16 @@
             isWaitingMyGuess: function () {
                 return this.iAmTheCurrentPlayer && this.game.status == 'WAITING_GUESS';
             },
+            iAmDropped: function () {
+                if (this.game == null || this.game.me == null || this.game.currentGenerator == null)
+                    return false;
+                for (var i = 0; i < this.game.players.length; i++) {
+                    if (this.game.players[i].id == this.my.id) {
+                        return false;
+                    }
+                }
+                return true;
+            },
             my: function () {
                 if (this.game == null || this.game.me == null) {
                     return {};
@@ -149,6 +164,11 @@
         margin: 0 auto;
         padding: 10px 15px;
         font-weight: bolder;
+    }
+
+    .alert-danger {
+        background-color: #fdd0c1;
+        border: 1px dashed #ff7c70;
     }
 
     .alert-warning {
