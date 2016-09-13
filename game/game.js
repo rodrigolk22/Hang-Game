@@ -304,9 +304,22 @@ var setMe = function (obj) {
     myPrivateKey = obj.privateKey;
     myPublicKey = obj.publicKey;
 
+    // return my data without private key
     return {
         id: myID,
         nickname: myNickname,
+        publicKey: myPublicKey
+    };
+};
+
+/**
+ * Get my game data
+ */
+var getMe = function () {
+    return {
+        id: myID,
+        nickname: myNickname,
+        privateKey: myPrivateKey,
         publicKey: myPublicKey
     }
 };
@@ -524,6 +537,7 @@ module.exports = {
     removePlayer: removePlayer,
 
     setMe: setMe,
+    getMe: getMe,
 
     // status changes
     startWaitingPlayers: startWaitingPlayers,

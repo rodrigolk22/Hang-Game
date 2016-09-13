@@ -1,6 +1,7 @@
 var exec = require('child_process').exec,
     prompt = require('prompt'),
     colors = require('colors/safe'),
+    URSA = require('ursa'),
     config = require('./config');
 
 prompt.start();

@@ -87,10 +87,6 @@ var emit = function (event, data, callback) {
     // set this message as the lastMessageSent
     setLastMessageSent(message);
 
-
-    // TODO: encrypt the message emitted here!
-
-
     // create a buffer object from the string
     var buffer = Buffer.from(message);
 
@@ -108,8 +104,6 @@ var emit = function (event, data, callback) {
  * @param remote remote address information
  */
 socket.on('message', function (buffer, remote) {
-
-    // TODO: decrypt the message received here!
 
     var message = buffer.toString();
 

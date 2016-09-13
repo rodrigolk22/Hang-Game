@@ -1,5 +1,6 @@
 var config = require('./../config'),
     debug = require('./helpers/debug'),
+    crypto = require('./crypto'),
     certGem = require('./helpers/certGem'),
     game = require('./game'),
     multicast = require('./multicast'), // multicast socket for the peer
@@ -56,9 +57,16 @@ multicast.socket.on('listening', function () {
     multicast.socket.on('choice', function (data) {
         if (game.iAmTheGenerator() && game.statusIs('WAITING_CHOICE')) {
 
-            // TODO: verify if the user that has sent a choice is the correct user
-
             var player = game.getCurrentPlayer();
+
+            // decrypt data using the publicKey of the player
+            data = crypto.decryptWithPublicKey(data, player.publicKey);
+
+            // if havn't decrypted, do nothing
+            if (typeof data != 'object') {
+                return;
+            }
+
             var char = data.choice;
 
             game.markCharacterAsNonavailable(char);
@@ -77,9 +85,16 @@ multicast.socket.on('listening', function () {
     multicast.socket.on('guess', function (data) {
         if (game.iAmTheGenerator() && game.statusIs('WAITING_GUESS')) {
 
-            // TODO: verify if the user that has guessed is the correct user
-
             var player = game.getCurrentPlayer();
+
+            // decrypt data using the publicKey of the player
+            data = crypto.decryptWithPublicKey(data, player.publicKey);
+
+            // if havn't decrypted, do nothing
+            if (typeof data != 'object') {
+                return;
+            }
+
             var guess = data.guess;
 
             if (guess == null) {
@@ -199,11 +214,21 @@ browser.on('connection', function (socket) {
 
     // when the browser client send a choice
     socket.on('choice', function (msg) {
+
+        // encrypt before send
+        var myPrivateKey = game.getMe().privateKey;
+        msg = crypto.encryptWithPrivateKey(msg, myPrivateKey);
+
         multicast.emit('choice', msg);
     });
 
     // when the browser client send a guess
     socket.on('guess', function (msg) {
+
+        // encrypt before send
+        var myPrivateKey = game.getMe().privateKey;
+        msg = crypto.encryptWithPrivateKey(msg, myPrivateKey);
+
         multicast.emit('guess', msg);
     });
 });
