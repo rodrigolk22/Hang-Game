@@ -5,87 +5,18 @@ var config = require('./../config'),
     browser = require('socket.io')(config.serverPort); // socket for the browser client
 
 /**
- * When there is no enought players until timeout
+ * Alert the peers that the game has been updated
  */
-game.events.on('waitingPlayersTimeout', function () {
-
-    // start the game if is not started yet
-    if (game.canStart()) {
-        game.startRound();
-    } else {
-        game.startWaitingPlayers();
-    }
-
-    alertBrowser();
-    alertPeers();
-});
+var alertPeers = function () {
+    multicast.emit('gameUpdated', game.getGameData());
+};
 
 /**
- * When the current player haven't sent a choice until timeout
+ * Alert the browser that the game has been updated
  */
-game.events.on('waitingChoiceTimeout', function () {
-    var player = game.getCurrentPlayer();
-
-    player.faults ++;
-
-    // if the player hasn't responded for more than maxPlayerFaults
-    if (player.faults > config.maxPlayerFaults) {
-        game.removePlayer(player.id);
-        debug(player.nickname + "hasn't respondend for " + config.maxPlayerFaults + ' turns,' +
-            ' and was droped from the game');
-    } else {
-        game.startWaitingChoice();
-    }
-
-    alertBrowser();
-    alertPeers();
-});
-
-/**
- * When the current player haven't sent a guess until timeout
- */
-game.events.on('waitingGuessTimeout', function () {
-    var player = game.getCurrentPlayer();
-
-    player.faults ++;
-
-    // if the player hasn't responded for more than maxPlayerFaults
-    if (player.faults > config.maxPlayerFaults) {
-
-        game.nextPlayer();
-        game.startWaitingGuess();
-
-        game.removePlayer(player.id);
-        debug(player.nickname + "hasn't respondend for " + config.maxPlayerFaults + ' turns,' +
-            ' and was droped from the game');
-    } else {
-        game.startWaitingGuess();
-    }
-
-    alertBrowser();
-    alertPeers();
-});
-
-/**
- * When the winner has been announced, then change the generator and
- * send a nextGenerator message in order to the next generator woke up;
- */
-game.events.on('announcingWinnerTimeout', function () {
-    game.nextGenerator();
-    multicast.emit('nextGenerator', game.getGameData());
-});
-
-/**
- * When an player is removed, then verify if the game
- * can continue or wait for more players
- */
-game.events.on('playerRemoved', function () {
-    if (!game.canStart()) {
-        game.startWaitingPlayers();
-    }
-    alertBrowser();
-    alertPeers();
-});
+var alertBrowser = function () {
+    browser.emit('gameUpdated', game.getGameData());
+};
 
 // peer <-> peer message handlers
 multicast.socket.on('listening', function () {
@@ -131,7 +62,7 @@ multicast.socket.on('listening', function () {
 
             game.markCharacterAsNonavailable(char);
 
-            // for every character, the player receive +1 point per character
+            // for every character, the player receive +1 point
             player.roundPoints += game.countCharactersInCurrentWord(char);
 
             game.startWaitingGuess();
@@ -151,7 +82,8 @@ multicast.socket.on('listening', function () {
             var guess = data.guess;
 
             if (guess == null) {
-                // pass the turn
+
+                // only pass the turn
                 game.nextPlayer();
                 game.startWaitingChoice();
 
@@ -174,6 +106,93 @@ multicast.socket.on('listening', function () {
     });
 });
 
+/**
+ * When there is not enought players until timeout
+ */
+game.events.on('waitingPlayersTimeout', function () {
+
+    // start the game if is not started yet
+    if (game.canStart()) {
+        game.startRound();
+    } else {
+        game.startWaitingPlayers(); // repeat
+    }
+
+    alertBrowser();
+    alertPeers();
+});
+
+/**
+ * When the current player haven't sent a choice until timeout
+ */
+game.events.on('waitingChoiceTimeout', function () {
+
+    var player = game.getCurrentPlayer();
+    player.faults ++;
+
+    if (player.faults > config.maxPlayerFaults) {
+        // the player hasn't responded for more than maxPlayerFaults
+        game.removePlayer(player.id);
+        debug(player.nickname + "hasn't respondend for " + config.maxPlayerFaults + ' turns,' +
+            ' and was droped from the game');
+    } else {
+        // player can have more faults until fail, then repeat restart waiting for a choice
+        game.startWaitingChoice();
+    }
+
+    alertBrowser();
+    alertPeers();
+});
+
+/**
+ * When the current player haven't sent a guess until timeout
+ */
+game.events.on('waitingGuessTimeout', function () {
+
+    var player = game.getCurrentPlayer();
+    player.faults ++;
+
+    if (player.faults > config.maxPlayerFaults) {
+        // player hasn't responded for more than maxPlayerFaults
+
+        // change to the next player
+        game.nextPlayer();
+        game.startWaitingGuess();
+
+        // remove the failed player
+        game.removePlayer(player.id);
+        debug(player.nickname + "hasn't respondend for " + config.maxPlayerFaults + ' turns,' +
+            ' and was droped from the game');
+    } else {
+        // player can have more faults until fail, then repeat restart waiting for a guess
+        game.startWaitingGuess();
+    }
+
+    alertBrowser();
+    alertPeers();
+});
+
+/**
+ * When the winner has been announced, then change the generator and
+ * send a nextGenerator message in order to the next generator wake up;
+ */
+game.events.on('announcingWinnerTimeout', function () {
+    game.nextGenerator();
+    multicast.emit('nextGenerator', game.getGameData());
+});
+
+/**
+ * When an player is removed, then verify if the game
+ * can continue or wait for more players
+ */
+game.events.on('playerRemoved', function () {
+    if (!game.canStart()) {
+        game.startWaitingPlayers();
+    }
+    alertBrowser();
+    alertPeers();
+});
+
 // server <-> browser message handlers
 browser.on('connection', function (socket) {
 
@@ -188,45 +207,28 @@ browser.on('connection', function (socket) {
     });
 });
 
-/**
- * Alert the peers that the game has been updated
- */
-var alertPeers = function () {
-    multicast.emit('gameUpdated', game.getGameData());
-};
-
-/**
- * Alert the browser that the game has been updated
- */
-var alertBrowser = function () {
-    browser.emit('gameUpdated', game.getGameData());
-};
-
 module.exports = function (nickname) {
 
-    // do initial game sync
-    game.init(function () {
+    var me = game.setMe(nickname);
 
-        var player = {
-            id: game.getMyId(),
-            nickname: nickname
-        };
+    // request to join the game
+    multicast.emit('joinTheGame', me);
 
-        // request to join the game
-        multicast.emit('joinTheGame', player);
+    game.startWaitingSync();
+    alertBrowser();
 
-        // wait for syncTime to sync with the peers
-        setTimeout(function () {
-            if (game.statusIs('NOT_SYNCED')) {
-                game.addPlayer(player);
-                game.startWaitingPlayers();
-                alertPeers();
-                debug('now, I am the generator!');
-            } else {
-                debug('now, I am an player!');
-            }
+    /**
+     * When the syncing time has passed without
+     * receiving any data from peers
+     */
+    game.events.on('waitingSyncTimeout', function () {
 
-            alertBrowser();
-        }, config.syncTime);
+        game.addPlayer(me);
+        game.startWaitingPlayers();
+
+        debug('now, I am the generator!');
+
+        alertPeers();
+        alertBrowser();
     });
 };

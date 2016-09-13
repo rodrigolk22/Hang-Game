@@ -1,23 +1,32 @@
 <template>
     <div id="app">
+
+        <table style="font-size: 0.8em">
+            <tr>
+                <td width="33.3%"><p v-if="my"><b>Playing as:</b> {{ my.nickname }}</p></td>
+                <td width="33.3%"><p v-if="my"><b>ID:</b> {{ my.id }}</p></td>
+                <td width="33.3%"><p v-show="timer > -1"><b>Time:</b> {{ timer }}s</p></td>
+            </tr>
+        </table>
+
         <div class="box text-center">
             <h3>{{ status }}</h3>
+            <p class="text-center" v-show="word"><b>Word is:</b> {{ word }}</p>
 
-            <table class="text-center">
-                <tr>
-                    <td><p v-show="word"><b>Word is:<b/> {{ word }}</p></td>
-                    <td><p v-show="timer"><b>Time:<b/> {{ timer }}</p></td>
-                </tr>
-            </table>
-
+            <!-- choice interface -->
             <turn-choice v-if="isWaitingMyChoice" :available-characters="game.availableCharacters"></turn-choice>
+
+            <!-- guess interface -->
             <turn-guess v-if="isWaitingMyGuess"></turn-guess>
 
+            <!-- generator interface -->
             <div v-if="iAmTheGenerator" class="alert alert-warning">
                 I Am the Generator!!!
             </div>
         </div>
-        <div class="box">
+
+        <div class="box" v-if="game.players.length > 1">
+            <!-- players list -->
             <player-list :players="game.players" :generator="game.currentGenerator" :me="game.me"></player-list>
         </div>
     </div>
@@ -80,6 +89,12 @@
             },
             isWaitingMyGuess: function () {
                 return this.iAmTheCurrentPlayer && this.game.status == 'WAITING_GUESS';
+            },
+            my: function () {
+                if (this.game == null || this.game.me == null) {
+                    return {};
+                }
+                return this.game.me;
             }
         },
         components: {
@@ -94,11 +109,11 @@
                 var now = (new Date().getTime());
                 var lastingTimeMillis = self.game.timer - now;
                 if (lastingTimeMillis > 0) {
-                    self.timer = Math.round(lastingTimeMillis / 1000);
+                    self.timer = Math.floor(lastingTimeMillis / 1000);
                 } else {
                     self.timer = 0;
                 }
-            }, 200);
+            }, 100);
 
             // handler for game updates
             this.$socket.on('gameUpdated', function (game) {
@@ -124,7 +139,7 @@
     }
 
     .box {
-        margin-top: 15px;
+        margin: 10px auto;
         padding: 20px;
         border-radius: 5px;
         background-color: #fff;

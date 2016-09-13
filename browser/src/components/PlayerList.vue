@@ -19,7 +19,7 @@
 </template>
 <style>
     .green {
-        background-color: #ACCF9A;
+        background-color: #D8FFBD;
     }
     table {
         width: 100%;
@@ -29,11 +29,9 @@
     }
     table td {
         padding: 5px 8px;
+        border-bottom: 1px dashed #f0f0f0;
     }
-    table tr {
-        border-bottom: 1px solid #f0f0f0;
-    }
-    table tr:last-child {
+    table tr:last-child td {
         border: none;
     }
 </style>

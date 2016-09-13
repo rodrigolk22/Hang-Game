@@ -276,6 +276,24 @@ var getMyId = function () {
 };
 
 /**
+ * Set and return my nickname and ID
+ * @param nickname
+ */
+var setMe = function (nickname) {
+    // generate the ID when is requested the first time
+    if (myID == -1) {
+        myID = require('./helpers/identificator');
+    }
+
+    myNickname = nickname;
+
+    return {
+        id: myID,
+        nickname: nickname
+    }
+};
+
+/**
  * Return true if the game can be started
  * @returns {boolean}
  */
@@ -397,11 +415,26 @@ var startWaitingPlayers = function () {
     });
 };
 
+/**
+ * Start announcing winner
+ */
 var startAnnouncingWinner = function () {
     setStatus('ANNOUNCING_WINNER');
     setTimer(config.announcingWinnerTime, function () {
         if (statusIs('ANNOUNCING_WINNER')) {
             events.emit('announcingWinnerTimeout');
+        }
+    });
+};
+
+/**
+ * Start waiting a syncronization with other players
+ */
+var startWaitingSync = function () {
+    setStatus('NOT_SYNCED');
+    setTimer(config.waitingSyncTime, function () {
+        if (statusIs('NOT_SYNCED')) {
+            events.emit('waitingSyncTimeout');
         }
     });
 };
@@ -444,27 +477,14 @@ var countCharactersInCurrentWord = function (character) {
     return count;
 };
 
-/**
- * Initiate the game data for this process
- * @param successCallback
- */
-var init = function (successCallback) {
-
-    // get the unique identificator for this machine + PID
-    require('./helpers/identificator')(function (id) {
-        myID = id;
-        successCallback();
-    });
-};
-
 module.exports = {
     events: events,
 
     canStart: canStart,
 
-    init: init,
     startRound: startRound,
     endRound: endRound,
+
     nextGenerator: nextGenerator,
     nextPlayer: nextPlayer,
 
@@ -485,10 +505,11 @@ module.exports = {
     addPlayer: addPlayer,
     removePlayer: removePlayer,
 
-    getMyId: getMyId,
+    setMe: setMe,
 
     // status changes
     startWaitingPlayers: startWaitingPlayers,
     startWaitingChoice: startWaitingChoice,
-    startWaitingGuess: startWaitingGuess
+    startWaitingGuess: startWaitingGuess,
+    startWaitingSync: startWaitingSync
 };
