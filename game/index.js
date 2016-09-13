@@ -153,6 +153,7 @@ game.events.on('waitingChoiceTimeout', function () {
             ' and was droped from the game');
     } else {
         // player can have more faults until fail, then repeat restart waiting for a choice
+        game.nextPlayer();
         game.startWaitingChoice();
     }
 
