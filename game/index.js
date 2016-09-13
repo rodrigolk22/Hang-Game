@@ -170,19 +170,14 @@ game.events.on('waitingGuessTimeout', function () {
     player.faults ++;
 
     if (player.faults > config.maxPlayerFaults) {
-        // player hasn't responded for more than maxPlayerFaults
-
-        // change to the next player
-        game.nextPlayer();
-        game.startWaitingGuess();
-
         // remove the failed player
         game.removePlayer(player.id);
         debug(player.nickname + "hasn't respondend for " + config.maxPlayerFaults + ' turns,' +
             ' and was droped from the game');
     } else {
         // player can have more faults until fail, then repeat restart waiting for a guess
-        game.startWaitingGuess();
+        game.nextPlayer();
+        game.startWaitingChoice();
     }
 
     alertBrowser();
