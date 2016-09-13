@@ -210,15 +210,14 @@ browser.on('connection', function (socket) {
 
 module.exports = function (nickname) {
 
-    var me = game.setMe(nickname);
+    // generate an RSA keys named with nickname
+    certGem.generate(nickname, function (privateKey, publicKey) {
 
-    // generate my public and private key
-    var RSAFileName = me.nickname + '-' + me.id;
-    certGem.generate(RSAFileName, function (privateKey, publicKey) {
-
-        me.publicKey = publicKey;
-
-        console.log(publicKey);
+        var me = game.setMe({
+            nickname: nickname,
+            privateKey: privateKey,
+            publicKey: publicKey
+        });
 
         // request to join the game
         multicast.emit('joinTheGame', me);

@@ -2,3 +2,5 @@ node_modules
 .gitignore
 .idea
 npm-debug.log
+/certs/client/*
+/certs/server/*

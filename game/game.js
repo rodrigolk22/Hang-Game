@@ -33,6 +33,18 @@ var myID = -1;
 var myNickname = '';
 
 /**
+ * My RSA private key
+ * @type {null}
+ */
+var myPrivateKey = null;
+
+/**
+ * My RSA public key (shared with other players)
+ * @type {null}
+ */
+var myPublicKey = null;
+
+/**
  * Game Players
  * List of player objects
  * @type {Array}
@@ -186,11 +198,14 @@ var addPlayer = function (player) {
         throw ('another player with id ' + player.id + ' already joined the game');
     }
 
+    console.log('player joined', player);
+
     circularList.add(generators, player.id);
 
     circularList.add(players, {
         id: player.id,
         nickname: player.nickname,
+        publicKey: player.publicKey,
         totalPoints: 0,
         roundPoints: 0,
         faults: 0
@@ -279,17 +294,20 @@ var getMyId = function () {
  * Set and return my nickname and ID
  * @param nickname
  */
-var setMe = function (nickname) {
+var setMe = function (obj) {
     // generate the ID when is requested the first time
     if (myID == -1) {
         myID = require('./helpers/identificator');
     }
 
-    myNickname = nickname;
+    myNickname = obj.nickname;
+    myPrivateKey = obj.privateKey;
+    myPublicKey = obj.publicKey;
 
     return {
         id: myID,
-        nickname: nickname
+        nickname: myNickname,
+        publicKey: myPublicKey
     }
 };
 
