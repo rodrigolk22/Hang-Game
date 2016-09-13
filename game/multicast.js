@@ -107,7 +107,7 @@ var emit = function (event, data, callback) {
  * @param buffer the message received
  * @param remote remote address information
  */
-var receive = function (buffer, remote) {
+socket.on('message', function (buffer, remote) {
 
     // TODO: decrypt the message received here!
 
@@ -130,10 +130,7 @@ var receive = function (buffer, remote) {
 
     // emit the custom event
     socket.emit(obj.event, obj.data);
-};
-
-// Messages handler
-socket.on('message', receive);
+});
 
 module.exports = {
     socket: socket,

@@ -1,5 +1,6 @@
 var config = require('./../config'),
     debug = require('./helpers/debug'),
+    certGem = require('./helpers/certGem'),
     game = require('./game'),
     multicast = require('./multicast'), // multicast socket for the peer
     browser = require('socket.io')(config.serverPort); // socket for the browser client
@@ -211,29 +212,38 @@ module.exports = function (nickname) {
 
     var me = game.setMe(nickname);
 
-    // request to join the game
-    multicast.emit('joinTheGame', me);
+    // generate my public and private key
+    var RSAFileName = me.nickname + '-' + me.id;
+    certGem.generate(RSAFileName, function (privateKey, publicKey) {
 
-    game.startWaitingSync();
-    alertBrowser();
+        me.publicKey = publicKey;
 
-    /**
-     * When the syncing time has passed without
-     * receiving any data from peers
-     */
-    game.events.on('waitingSyncTimeout', function () {
+        console.log(publicKey);
 
-        game.addPlayer(me);
-        game.startWaitingPlayers();
+        // request to join the game
+        multicast.emit('joinTheGame', me);
 
-        debug('now, I am the generator!');
-
-        alertPeers();
+        game.startWaitingSync();
         alertBrowser();
+
+        /**
+         * When the syncing time has passed without
+         * receiving any data from peers
+         */
+        game.events.on('waitingSyncTimeout', function () {
+
+            game.addPlayer(me);
+            game.startWaitingPlayers();
+
+            debug('now, I am the generator!');
+
+            alertPeers();
+            alertBrowser();
+        });
+
+        // update the browser whatever has hapened
+        setTimeout(function () {
+            alertBrowser();
+        }, config.waitingSyncTime);
     });
-
-    // update the browser whatever has hapened
-    setTimeout(function () {
-        alertBrowser();
-    }, config.waitingSyncTime);
 };
