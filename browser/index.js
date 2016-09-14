@@ -1,6 +1,11 @@
 var  electron = require('electron'),
     config = require('./../config');
 
+// store the server port in a global to be used in index.html
+global.sharedObject = {
+    port: process.argv[2]
+};
+
 var app = electron.app,
     BrowserWindow = electron.BrowserWindow;
 

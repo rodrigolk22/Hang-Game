@@ -1,7 +1,6 @@
 var exec = require('child_process').exec,
     prompt = require('prompt'),
     colors = require('colors/safe'),
-    URSA = require('ursa'),
     config = require('./config');
 
 prompt.start();
@@ -19,7 +18,7 @@ prompt.get({
     require('./game')(result.nickname);
 
     // open the headless browser with electron
-    exec('electron ./browser', function(err, stdout, stderr) {
+    exec('./node_modules/.bin/electron ./browser 8081', function(err, stdout, stderr) {
         if (err) throw err;
     });
 

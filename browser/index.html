@@ -2,8 +2,9 @@
 <html lang="en">
   <head>
     <script>
-        var config = require('./../config');
-        document.write('<meta name="port" content="' + config.serverPort + '">');
+      var remote = require('electron').remote,
+              port = remote.getGlobal('sharedObject').port;
+        document.write('<meta name="port" content="' + port + '">');
     </script>
     <meta charset="utf-8">
     <title>Forca Game</title>
