@@ -15,11 +15,11 @@ var generate = function (name, callback) {
     // generate the private key
     exec('openssl genrsa -out ' + privateCertPath + ' 2048', function(err, stdout, stderr) {
         if (err) throw err;
-
+	
         // generate the public key
         exec('openssl rsa -in ' + privateCertPath + ' -pubout -out ' + publicCertPath, function(err, stdout, stderr) {
             if (err) throw err;
-
+	
             // set the private and public key
             var privateKey = fs.readFileSync('./certs/server/' + name + '.key.pem').toString();
             var publicKey = fs.readFileSync('./certs/client/' + name + '.pub').toString();
